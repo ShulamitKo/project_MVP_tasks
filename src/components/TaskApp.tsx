@@ -9,23 +9,20 @@ import {
   Plus,
   Menu
 } from 'lucide-react';
+import NewCategoryModal from './categories/NewCategoryModal';
+import { ColorType, Category, NewCategory } from '../types/category';
 
 interface TaskAppProps {
   onNewTask: () => void;
   onViewChange: (view: string) => void;
+  categories: Category[];
+  onAddCategory: (category: NewCategory) => void;
 }
 
-const TaskApp: React.FC<TaskAppProps> = ({ onNewTask, onViewChange }) => {
+const TaskApp: React.FC<TaskAppProps> = ({ onNewTask, onViewChange, categories, onAddCategory }) => {
   const [isSidebarOpen, setSidebarOpen] = useState(true);
   const [activeCategory, setActiveCategory] = useState('all');
-
-  // Categories Data
-  const categories = [
-    { id: 'all', name: 'כל המשימות', count: 12, color: 'blue' },
-    { id: 'personal', name: 'אישי', count: 4, color: 'green' },
-    { id: 'work', name: 'עבודה', count: 6, color: 'yellow' },
-    { id: 'family', name: 'משפחה', count: 2, color: 'red' }
-  ];
+  const [showNewCategory, setShowNewCategory] = useState(false);
 
   // Navigation Items
   const navItems = [
@@ -36,14 +33,25 @@ const TaskApp: React.FC<TaskAppProps> = ({ onNewTask, onViewChange }) => {
   ];
 
   // Color Utilities
-  const getColorClass = (color: string) => {
-    const colors: Record<string, string> = {
+  const getColorClass = (color: ColorType) => {
+    const colors: Record<ColorType, string> = {
       blue: 'bg-blue-500',
       green: 'bg-green-500',
       yellow: 'bg-yellow-500',
-      red: 'bg-red-500'
+      red: 'bg-red-500',
+      purple: 'bg-purple-500',
+      pink: 'bg-pink-500',
+      indigo: 'bg-indigo-500',
+      teal: 'bg-teal-500',
+      orange: 'bg-orange-500',
+      cyan: 'bg-cyan-500'
     };
     return colors[color] || colors.blue;
+  };
+
+  // עדכון הטיפוס בפונקציה
+  const handleAddCategory = (newCategory: NewCategory) => {
+    onAddCategory(newCategory);
   };
 
   return (
@@ -92,7 +100,10 @@ const TaskApp: React.FC<TaskAppProps> = ({ onNewTask, onViewChange }) => {
           <div className="mt-8">
             <div className="flex items-center justify-between mb-4">
               {isSidebarOpen && <h2 className="font-semibold text-gray-600">קטגוריות</h2>}
-              <button className="p-2 hover:bg-gray-100 rounded-full">
+              <button 
+                onClick={() => setShowNewCategory(true)}
+                className="p-2 hover:bg-gray-100 rounded-full"
+              >
                 <Plus className={`w-4 h-4 text-gray-500 ${
                   isSidebarOpen ? '' : 'mx-auto'
                 }`} />
@@ -145,6 +156,17 @@ const TaskApp: React.FC<TaskAppProps> = ({ onNewTask, onViewChange }) => {
           </div>
         </div>
       </main>
+
+      {/* מודאל הוספת קטגוריה */}
+      {showNewCategory && (
+        <NewCategoryModal
+          onClose={() => setShowNewCategory(false)}
+          onSubmit={(category: NewCategory) => {
+            handleAddCategory(category);
+            setShowNewCategory(false);
+          }}
+        />
+      )}
     </div>
   );
 };

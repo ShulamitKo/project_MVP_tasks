@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Home,
   Calendar,
@@ -27,15 +27,10 @@ import AnalyticsDashboard from './components/AnalyticsDashboard';
 import SettingsScreen from './components/SettingsScreen';
 import TaskItem from './components/TaskItem';
 import { Task } from './types/task';
+import NewCategoryModal from './components/categories/NewCategoryModal';
+import { ColorType, Category } from './types/category';
 
-// הגדרת טיפוסים
-type ColorType = 'blue' | 'green' | 'yellow' | 'red';
-type CategoryType = {
-  id: string;
-  name: string;
-  count: number;
-  color: ColorType;
-};
+type CategoryType = Category;
 
 function App() {
   const [isSidebarOpen, setSidebarOpen] = useState(true);
@@ -90,7 +85,7 @@ function App() {
     {
       id: 4,
       title: 'פגישת לקוח',
-      description: 'פגישת היכרות עם לקוח פוטנציאלי',
+      description: 'פגישת היכרות עם לקוח פוטניאלי',
       dueDate: '2024-11-15',
       dueTime: '11:00',
       category: 'work',
@@ -118,12 +113,12 @@ function App() {
   ]);
 
   // קטגוריות
-  const categories: CategoryType[] = [
+  const [categories, setCategories] = useState<CategoryType[]>([
     { id: 'all', name: 'כל המשימות', count: 12, color: 'blue' },
     { id: 'personal', name: 'אישי', count: 4, color: 'green' },
     { id: 'work', name: 'עבודה', count: 6, color: 'yellow' },
     { id: 'family', name: 'משפחה', count: 2, color: 'red' }
-  ];
+  ]);
 
   // פריטי תפריט
   const navItems = [
@@ -139,7 +134,13 @@ function App() {
       blue: 'bg-blue-500',
       green: 'bg-green-500',
       yellow: 'bg-yellow-500',
-      red: 'bg-red-500'
+      red: 'bg-red-500',
+      purple: 'bg-purple-500',
+      pink: 'bg-pink-500',
+      indigo: 'bg-indigo-500',
+      teal: 'bg-teal-500',
+      orange: 'bg-orange-500',
+      cyan: 'bg-cyan-500'
     };
     return colors[color];
   };
@@ -169,6 +170,14 @@ function App() {
   const handleTaskClick = (taskId: number) => {
     setSelectedTaskId(taskId);
     setShowTaskDetails(true);
+  };
+
+  // פונקציה לסינון המשימות לפי הקטגוריה הפעילה
+  const getFilteredTasks = () => {
+    if (activeCategory === 'all') {
+      return tasks;
+    }
+    return tasks.filter(task => task.category === activeCategory);
   };
 
   // רינדור הדשבורד
@@ -297,10 +306,15 @@ function App() {
             <div>
               <label className="block text-sm text-gray-600 mb-1">קטגוריה</label>
               <select className="w-full p-2 border rounded-lg">
-                <option>הכל</option>
-                <option>עבודה</option>
-                <option>אישי</option>
-                <option>לימודים</option>
+                <option value="all">הכל</option>
+                {categories
+                  .filter(cat => cat.id !== 'all')
+                  .map(category => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
+                  ))
+                }
               </select>
             </div>
             <div className="flex items-end">
@@ -315,15 +329,21 @@ function App() {
       {/* Task List */}
       <div className="flex-1 p-4 overflow-auto">
         <div className="space-y-3">
-          {tasks.map(task => (
+          {getFilteredTasks().map(task => (
             <TaskItem
               key={task.id}
               task={task}
               onTaskUpdate={handleTaskUpdate}
               onTaskDelete={handleTaskDelete}
               onTaskEdit={handleTaskEdit}
+              categories={categories}
             />
           ))}
+          {getFilteredTasks().length === 0 && (
+            <div className="text-center text-gray-500 py-8">
+              <p>אין משימות בקטגוריה זו</p>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -341,6 +361,31 @@ function App() {
       default:
         return { text: 'לא הוגדר', color: 'text-gray-600', bgColor: 'bg-gray-50' };
     }
+  };
+
+  const [showNewCategory, setShowNewCategory] = useState(false);
+
+  // הוספת פונקציה לחישוב מספר המשימות בכל קטגוריה
+  const updateCategoryCounts = () => {
+    const newCategories = categories.map(category => ({
+      ...category,
+      count: category.id === 'all' 
+        ? tasks.length 
+        : tasks.filter(task => task.category === category.id).length
+    }));
+    
+    setCategories(newCategories);
+  };
+
+  // קריאה לפונקציה בכל שינוי של המשימות
+  useEffect(() => {
+    updateCategoryCounts();
+  }, [tasks]);
+
+  // עדכון הפונקציה לטיפול בלחיצה על קטגוריה
+  const handleCategoryClick = (categoryId: string) => {
+    setActiveCategory(categoryId);  // עדכון הקטגוריה הפעילה
+    setCurrentView('dashboard');    // מעבר למסך הראשי
   };
 
   return (
@@ -389,15 +434,20 @@ function App() {
           <div className="mt-8">
             <div className="flex items-center justify-between mb-4">
               {isSidebarOpen && <h2 className="font-semibold text-gray-600">קטגוריות</h2>}
-              <button className="p-2 hover:bg-gray-100 rounded-full">
-                <Plus className={`w-4 h-4 text-gray-500 ${isSidebarOpen ? '' : 'mx-auto'}`} />
+              <button 
+                onClick={() => setShowNewCategory(true)}
+                className="p-2 hover:bg-gray-100 rounded-full"
+              >
+                <Plus className={`w-4 h-4 text-gray-500 ${
+                  isSidebarOpen ? '' : 'mx-auto'
+                }`} />
               </button>
             </div>
             <div className="space-y-1">
               {categories.map((category) => (
                 <button
                   key={category.id}
-                  onClick={() => setActiveCategory(category.id)}
+                  onClick={() => handleCategoryClick(category.id)}  // שימוש בפונקציה החדשה
                   className={`w-full px-3 py-2 rounded-lg text-right flex items-center ${
                     activeCategory === category.id 
                       ? 'bg-gray-100'
@@ -429,13 +479,15 @@ function App() {
             initialTask={tasks.find(t => t.id === selectedTaskId)}
             onSubmit={(updatedTask) => {
               if (selectedTaskId) {
-                // עדכון משימה קיימת
                 handleTaskUpdate(updatedTask);
               } else {
-                // יצירת משימה חדשה
-                setTasks(prev => [...prev, { ...updatedTask, id: Math.max(...prev.map(t => t.id ?? 0)) + 1 }]);
+                setTasks(prev => [...prev, { 
+                  ...updatedTask, 
+                  id: Math.max(...prev.map(t => t.id ?? 0)) + 1 
+                }]);
               }
             }}
+            categories={categories}
           />
         ) : (
           <>
@@ -446,8 +498,36 @@ function App() {
                 onNewTask={() => setShowNewTask(true)}
               />
             )}
-            {currentView === 'analytics' && <AnalyticsDashboard />}
-            {currentView === 'settings' && <SettingsScreen />}
+            {currentView === 'analytics' && (
+              <AnalyticsDashboard 
+                tasks={tasks}
+                categories={categories}
+              />
+            )}
+            {currentView === 'settings' && (
+              <SettingsScreen 
+                categories={categories}
+                onAddCategory={(category) => {
+                  setCategories(prev => [
+                    ...prev,
+                    {
+                      id: category.name.toLowerCase().replace(/\s+/g, '-'),
+                      name: category.name,
+                      count: 0,
+                      color: category.color
+                    }
+                  ]);
+                }}
+                onEditCategory={(id, updates) => {
+                  setCategories(prev => prev.map(cat => 
+                    cat.id === id ? { ...cat, ...updates } : cat
+                  ));
+                }}
+                onDeleteCategory={(id) => {
+                  setCategories(prev => prev.filter(cat => cat.id !== id));
+                }}
+              />
+            )}
             {currentView === 'dashboard' && renderDashboard()}
           </>
         )}
@@ -590,6 +670,24 @@ function App() {
             </div>
           </div>
         </div>
+      )}
+
+      {showNewCategory && (
+        <NewCategoryModal
+          onClose={() => setShowNewCategory(false)}
+          onSubmit={(newCategory) => {
+            setCategories(prev => [
+              ...prev,
+              {
+                id: newCategory.name.toLowerCase().replace(/\s+/g, '-'),
+                name: newCategory.name,
+                count: 0,
+                color: newCategory.color as ColorType
+              }
+            ]);
+            setShowNewCategory(false);
+          }}
+        />
       )}
     </div>
   );

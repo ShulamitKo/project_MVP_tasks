@@ -1,19 +1,36 @@
 import React from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { Task } from '../../types/task';
+import { ColorType, Category } from '../../types/category';
 
-interface CategoryData {
-  name: string;
-  value: number;
+interface CategoryDistributionProps {
+  tasks: Task[];
+  categories: Category[];
 }
 
-const CategoryDistribution: React.FC = () => {
-  const categoryData: CategoryData[] = [
-    { name: 'עבודה', value: 6 },
-    { name: 'אישי', value: 4 },
-    { name: 'משפחה', value: 2 }
-  ];
+const CategoryDistribution: React.FC<CategoryDistributionProps> = ({ tasks, categories }) => {
+  // הכנת הנתונים לגרף
+  const categoryData = categories
+    .filter(cat => cat.id !== 'all')
+    .map(category => ({
+      name: category.name,
+      value: tasks.filter(task => task.category === category.id).length,
+      color: category.color
+    }));
 
-  const COLORS = ['#3B82F6', '#10B981', '#F59E0B'];
+  // צבעים לגרף
+  const COLORS: Record<ColorType, string> = {
+    blue: '#3B82F6',
+    green: '#10B981',
+    yellow: '#F59E0B',
+    red: '#EF4444',
+    purple: '#8B5CF6',
+    pink: '#EC4899',
+    indigo: '#6366F1',
+    teal: '#14B8A6',
+    orange: '#F97316',
+    cyan: '#06B6D4'
+  };
 
   return (
     <div className="bg-white p-6 rounded-xl shadow-sm">
@@ -29,11 +46,17 @@ const CategoryDistribution: React.FC = () => {
               nameKey="name"
               label={({name, value}) => `${name} (${value})`}
             >
-              {categoryData.map((_, index) => (
-                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+              {categoryData.map((entry) => (
+                <Cell 
+                  key={`cell-${entry.name}`} 
+                  fill={COLORS[entry.color]} 
+                />
               ))}
             </Pie>
-            <Tooltip />
+            <Tooltip 
+              formatter={(value: number) => [`${value} משימות`, '']}
+              labelFormatter={(label: string) => `קטגוריה: ${label}`}
+            />
           </PieChart>
         </ResponsiveContainer>
       </div>

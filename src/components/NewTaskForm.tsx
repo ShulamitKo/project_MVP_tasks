@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { 
   Calendar, 
   Clock, 
-  Tag, 
   ChevronRight, 
   MapPin, 
   Bell,
@@ -10,13 +9,21 @@ import {
 } from 'lucide-react';
 import { Task, TaskPriority, TaskCategory, TaskRepeat } from '../types/task';
 
-interface NewTaskFormProps {
-  onClose: () => void;
-  onSubmit?: (task: Task) => void;
-  initialTask?: Task;
+interface Category {
+  id: string;
+  name: string;
+  count: number;
+  color: string;
 }
 
-const NewTaskForm: React.FC<NewTaskFormProps> = ({ onClose, onSubmit, initialTask }) => {
+interface NewTaskFormProps {
+  onClose: () => void;
+  onSubmit: (task: Task) => void;
+  initialTask?: Task;
+  categories: Category[];
+}
+
+const NewTaskForm: React.FC<NewTaskFormProps> = ({ onClose, onSubmit, initialTask, categories }) => {
   const [task, setTask] = useState<Task>(initialTask || {
     title: '',
     description: '',
@@ -42,8 +49,7 @@ const NewTaskForm: React.FC<NewTaskFormProps> = ({ onClose, onSubmit, initialTas
   };
 
   const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const value = e.target.value as TaskCategory;
-    setTask({ ...task, category: value });
+    setTask({ ...task, category: e.target.value as TaskCategory });
   };
 
   const handleRepeatChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -135,20 +141,20 @@ const NewTaskForm: React.FC<NewTaskFormProps> = ({ onClose, onSubmit, initialTas
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block font-medium mb-1 text-gray-700">קטגוריה</label>
-            <div className="relative">
-              <Tag className="w-5 h-5 text-gray-400 absolute right-3 top-2.5" />
-              <select
-                value={task.category}
-                onChange={handleCategoryChange}
-                className="w-full pl-4 pr-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none"
-              >
-                <option value="work">עבודה</option>
-                <option value="personal">אישי</option>
-                <option value="study">לימודים</option>
-                <option value="shopping">קניות</option>
-                <option value="family">משפחה</option>
-              </select>
-            </div>
+            <select
+              value={task.category}
+              onChange={handleCategoryChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {categories
+                .filter(cat => cat.id !== 'all')
+                .map(category => (
+                  <option key={category.id} value={category.id as TaskCategory}>
+                    {category.name}
+                  </option>
+                ))
+              }
+            </select>
           </div>
 
           <div>
@@ -200,7 +206,7 @@ const NewTaskForm: React.FC<NewTaskFormProps> = ({ onClose, onSubmit, initialTas
               type="text"
               value={task.location}
               onChange={(e) => setTask({...task, location: e.target.value})}
-              placeholder="הכנס מיקום (או��ציונלי)"
+              placeholder="הכנס מיקום (אוציונלי)"
               className="w-full pl-4 pr-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>

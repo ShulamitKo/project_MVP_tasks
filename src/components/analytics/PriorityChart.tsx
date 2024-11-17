@@ -1,16 +1,15 @@
 import React from 'react';
+import { Task } from '../../types/task';
 
-interface PriorityItem {
-  name: string;
-  value: number;
-  color: string;
+interface PriorityChartProps {
+  tasks: Task[];
 }
 
-const PriorityChart: React.FC = () => {
-  const priorities: PriorityItem[] = [
-    { name: 'גבוהה', value: 4, color: '#EF4444' },
-    { name: 'בינונית', value: 6, color: '#F59E0B' },
-    { name: 'נמוכה', value: 2, color: '#10B981' }
+const PriorityChart: React.FC<PriorityChartProps> = ({ tasks }) => {
+  const priorities = [
+    { name: 'גבוהה', value: tasks.filter(t => t.priority === 'high').length, color: '#EF4444' },
+    { name: 'בינונית', value: tasks.filter(t => t.priority === 'medium').length, color: '#F59E0B' },
+    { name: 'נמוכה', value: tasks.filter(t => t.priority === 'low').length, color: '#10B981' }
   ];
 
   const total = priorities.reduce((sum, item) => sum + item.value, 0);

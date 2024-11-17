@@ -4,8 +4,16 @@ import NotificationsSection from './settings/NotificationsSection';
 import AppearanceSection from './settings/AppearanceSection';
 import CategoriesSection from './settings/CategoriesSection';
 import AboutSection from './settings/AboutSection';
+import { Category, NewCategory } from '../types/category';
 
-const SettingsScreen: React.FC = () => {
+interface SettingsScreenProps {
+  categories: Category[];
+  onAddCategory: (category: NewCategory) => void;
+  onEditCategory: (id: string, updates: Partial<NewCategory>) => void;
+  onDeleteCategory: (id: string) => void;
+}
+
+const SettingsScreen: React.FC<SettingsScreenProps> = ({ categories, onAddCategory, onEditCategory, onDeleteCategory }) => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -17,7 +25,7 @@ const SettingsScreen: React.FC = () => {
         <ProfileSection />
         <NotificationsSection />
         <AppearanceSection />
-        <CategoriesSection />
+        <CategoriesSection categories={categories} onAddCategory={onAddCategory} onEditCategory={onEditCategory} onDeleteCategory={onDeleteCategory} />
         <AboutSection />
 
         {/* Logout Button */}

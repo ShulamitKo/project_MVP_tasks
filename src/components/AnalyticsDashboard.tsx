@@ -3,8 +3,15 @@ import { Calendar, Clock, Target } from 'lucide-react';
 import StatsCard from './analytics/StatsCard';
 import PriorityChart from './analytics/PriorityChart';
 import CategoryDistribution from './analytics/CategoryDistribution';
+import { Task } from '../types/task';
+import {Category } from '../types/category';
 
-const AnalyticsDashboard: React.FC = () => {
+interface AnalyticsDashboardProps {
+  tasks: Task[];
+  categories: Category[];
+}
+
+const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ tasks, categories }) => {
   const stats = [
     {
       title: 'משימות להיום',
@@ -48,8 +55,8 @@ const AnalyticsDashboard: React.FC = () => {
 
       {/* Charts */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <CategoryDistribution />
-        <PriorityChart />
+        <CategoryDistribution tasks={tasks} categories={categories} />
+        <PriorityChart tasks={tasks} />
       </div>
     </div>
   );

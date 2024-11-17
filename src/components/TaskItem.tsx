@@ -8,19 +8,22 @@ import {
 } from 'lucide-react';
 import { Task } from '../types/task';
 import TaskActionsMenu from './TaskActionsMenu';
+import { ColorType, Category } from '../types/category';
 
 interface TaskItemProps {
   task: Task;
   onTaskUpdate: (task: Task) => void;
-  onTaskDelete: (taskId: number) => void;
-  onTaskEdit: (task: Task) => void;
+  onTaskDelete: (id: number) => void;
+  onTaskEdit: () => void;
+  categories: Category[];
 }
 
 const TaskItem: React.FC<TaskItemProps> = ({
   task,
   onTaskUpdate,
   onTaskDelete,
-  onTaskEdit
+  onTaskEdit,
+  categories
 }) => {
   const [showMenu, setShowMenu] = useState(false);
 
@@ -40,6 +43,30 @@ const TaskItem: React.FC<TaskItemProps> = ({
       isCompleted: false
     };
     onTaskUpdate(newTask);
+  };
+
+  const getCategory = () => {
+    return categories.find(cat => cat.id === task.category);
+  };
+
+  const getCategoryColorClass = () => {
+    const category = getCategory();
+    if (!category) return '';
+    
+    const colors: Record<ColorType, { bg: string; text: string }> = {
+      blue: { bg: 'bg-blue-100', text: 'text-blue-800' },
+      green: { bg: 'bg-green-100', text: 'text-green-800' },
+      yellow: { bg: 'bg-yellow-100', text: 'text-yellow-800' },
+      red: { bg: 'bg-red-100', text: 'text-red-800' },
+      purple: { bg: 'bg-purple-100', text: 'text-purple-800' },
+      pink: { bg: 'bg-pink-100', text: 'text-pink-800' },
+      indigo: { bg: 'bg-indigo-100', text: 'text-indigo-800' },
+      teal: { bg: 'bg-teal-100', text: 'text-teal-800' },
+      orange: { bg: 'bg-orange-100', text: 'text-orange-800' },
+      cyan: { bg: 'bg-cyan-100', text: 'text-cyan-800' }
+    };
+    
+    return `${colors[category.color].bg} ${colors[category.color].text}`;
   };
 
   return (
@@ -119,9 +146,11 @@ const TaskItem: React.FC<TaskItemProps> = ({
 
       {/* Tags */}
       <div className="mt-3 flex gap-2">
-        <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">
-          {task.category}
-        </span>
+        {getCategory() && (
+          <span className={`px-3 py-1 rounded-full text-sm ${getCategoryColorClass()}`}>
+            {getCategory()?.name}
+          </span>
+        )}
         {task.priority === 'high' && (
           <span className="px-3 py-1 bg-red-100 text-red-800 text-sm rounded-full">
             דחוף
