@@ -6,16 +6,22 @@ import { ColorType, Category } from '../../types/category';
 interface CategoryDistributionProps {
   tasks: Task[];
   categories: Category[];
+  activeCategory: string;
 }
 
-const CategoryDistribution: React.FC<CategoryDistributionProps> = ({ tasks, categories }) => {
+const CategoryDistribution: React.FC<CategoryDistributionProps> = ({ 
+  tasks, 
+  categories,
+  activeCategory 
+}) => {
   // הכנת הנתונים לגרף
   const categoryData = categories
     .filter(cat => cat.id !== 'all')
     .map(category => ({
       name: category.name,
       value: tasks.filter(task => task.category === category.id).length,
-      color: category.color
+      color: category.color,
+      isActive: category.id === activeCategory
     }));
 
   // צבעים לגרף
@@ -49,7 +55,11 @@ const CategoryDistribution: React.FC<CategoryDistributionProps> = ({ tasks, cate
               {categoryData.map((entry) => (
                 <Cell 
                   key={`cell-${entry.name}`} 
-                  fill={COLORS[entry.color]} 
+                  fill={COLORS[entry.color]}
+                  // הוספת אפקט הדגשה לקטגוריה הפעילה
+                  opacity={activeCategory !== 'all' && !entry.isActive ? 0.3 : 1}
+                  stroke={entry.isActive ? '#3B82F6' : 'none'}
+                  strokeWidth={entry.isActive ? 3 : 0}
                 />
               ))}
             </Pie>

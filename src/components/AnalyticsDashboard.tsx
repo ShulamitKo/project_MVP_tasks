@@ -9,9 +9,10 @@ import {Category } from '../types/category';
 interface AnalyticsDashboardProps {
   tasks: Task[];
   categories: Category[];
+  activeCategory: string;
 }
 
-const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ tasks, categories }) => {
+const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ tasks, categories, activeCategory }) => {
   const stats = [
     {
       title: 'משימות להיום',
@@ -55,7 +56,7 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ tasks, categori
 
       {/* Charts */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <CategoryDistribution tasks={tasks} categories={categories} />
+        <CategoryDistribution tasks={tasks} categories={categories} activeCategory={activeCategory} />
         <PriorityChart tasks={tasks} />
       </div>
     </div>

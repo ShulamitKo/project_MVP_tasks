@@ -8,13 +8,15 @@ import {
 import { Task } from '../types/task';
 
 interface CalendarViewProps {
-  tasks?: Task[];
-  onTaskClick?: (taskId: number) => void;
-  onNewTask?: () => void;
+  tasks: Task[];
+  activeCategory: string;
+  onTaskClick: (taskId: number) => void;
+  onNewTask: () => void;
 }
 
 const CalendarView: React.FC<CalendarViewProps> = ({ 
-  tasks = [], 
+  tasks, 
+  activeCategory,
   onTaskClick,
   onNewTask 
 }) => {
@@ -66,6 +68,29 @@ const CalendarView: React.FC<CalendarViewProps> = ({
     return day === today.getDate() && 
            selectedDate.getMonth() === today.getMonth() &&
            selectedDate.getFullYear() === today.getFullYear();
+  };
+
+  // פונקציה להחזרת סטייל למשימה בהתאם לקטגוריה
+  const getTaskStyle = (task: Task) => {
+    const baseStyle = `w-full p-2 rounded text-sm transition-all duration-300 ${
+      task.priority === 'high' 
+        ? 'bg-red-50 text-red-700'
+        : task.priority === 'medium'
+          ? 'bg-yellow-50 text-yellow-700'
+          : 'bg-green-50 text-green-700'
+    }`;
+
+    // אם זו הקטגוריה הפעילה, נוסיף הדגשה
+    if (activeCategory !== 'all' && task.category === activeCategory) {
+      return `${baseStyle} transform scale-105 shadow-md ring-2 ring-blue-400 ring-opacity-50`;
+    }
+
+    // אם יש קטגוריה פעילה אבל זו לא המשימה ממנה, נעמעם קצת
+    if (activeCategory !== 'all' && task.category !== activeCategory) {
+      return `${baseStyle} opacity-40`;
+    }
+
+    return baseStyle;
   };
 
   return (
@@ -129,19 +154,13 @@ const CalendarView: React.FC<CalendarViewProps> = ({
                   }`}>
                     {day}
                   </div>
-                  {/* משימות של היום */}
+                  {/* משימות של היום - עם סטיילינג מעודכן */}
                   <div className="space-y-1">
                     {getTasksForDate(day).map(task => (
                       <button
                         key={task.id}
                         onClick={() => onTaskClick?.(task.id!)}
-                        className={`w-full p-2 rounded text-sm ${
-                          task.priority === 'high' 
-                            ? 'bg-red-50 text-red-700'
-                            : task.priority === 'medium'
-                              ? 'bg-yellow-50 text-yellow-700'
-                              : 'bg-green-50 text-green-700'
-                        }`}
+                        className={getTaskStyle(task)}
                       >
                         <div className="font-medium truncate">{task.title}</div>
                         <div className="flex items-center text-xs mt-1">

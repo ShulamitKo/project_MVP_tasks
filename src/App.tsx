@@ -10,7 +10,6 @@ import {
   Search,
   Bell,
   PlusCircle,
-  CheckCircle,
   Clock,
   Filter,
   X,
@@ -32,13 +31,18 @@ import { ColorType, Category } from './types/category';
 
 type CategoryType = Category;
 
+// עדכון הממשק של הסינונים
+interface FilterState {
+  date: 'today' | 'week' | 'month' | 'all';
+  status: 'all' | 'pending' | 'completed';
+  priority: 'all' | 'high' | 'medium' | 'low';
+}
+
 function App() {
   const [isSidebarOpen, setSidebarOpen] = useState(true);
   const [currentView, setCurrentView] = useState('dashboard');
   const [showNewTask, setShowNewTask] = useState(false);
   const [activeCategory, setActiveCategory] = useState('all');
-  const [showAdvancedFilter, setShowAdvancedFilter] = useState(false);
-  const [activeTab, setActiveTab] = useState('today');
   const [tasks, setTasks] = useState<Task[]>([
     {
       id: 1,
@@ -172,30 +176,109 @@ function App() {
     setShowTaskDetails(true);
   };
 
-  // פונקציה לסינון המשימות לפי הקטגוריה הפעילה
-  const getFilteredTasks = () => {
-    if (activeCategory === 'all') {
-      return tasks;
-    }
-    return tasks.filter(task => task.category === activeCategory);
+  // פונקציה לסינון המשימות
+  const [filters, setFilters] = useState<FilterState>({
+    date: 'today',
+    status: 'all',
+    priority: 'all'
+  });
+
+  // הוספת state לחיפוש
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // פונקציה נפרדת לחיפוש
+  const searchTasks = (tasks: Task[]) => {
+    if (!searchQuery) return tasks;
+    
+    const searchLower = searchQuery.toLowerCase();
+    return tasks.filter(task => {
+      // קודם בודקים את הקטגוריה
+      if (activeCategory !== 'all' && task.category !== activeCategory) {
+        return false;
+      }
+      
+      // אם עברנו את בדיקת הקטגוריה, בודקים את החיפוש
+      return task.title.toLowerCase().includes(searchLower) ||
+             task.description.toLowerCase().includes(searchLower) ||
+             task.location?.toLowerCase().includes(searchLower);
+    });
   };
 
-  // רינדור הדשבורד
+  // פונקציה נפרדת לסינון
+  const filterTasks = (tasks: Task[]) => {
+    return tasks.filter(task => {
+      // סינון לפי קטגוריה
+      if (activeCategory !== 'all' && task.category !== activeCategory) {
+        return false;
+      }
+
+      // סינון לפי תאריך
+      const taskDate = new Date(task.dueDate);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const weekStart = new Date(today);
+      weekStart.setDate(today.getDate() - today.getDay());
+      
+      const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+
+      switch (filters.date) {
+        case 'today':
+          if (taskDate.toDateString() !== today.toDateString()) return false;
+          break;
+        case 'week':
+          if (taskDate < weekStart || taskDate > today) return false;
+          break;
+        case 'month':
+          if (taskDate < monthStart || taskDate > today) return false;
+          break;
+      }
+
+      // סינון לפי סטטוס
+      if (filters.status !== 'all') {
+        if (filters.status === 'completed' && !task.isCompleted) return false;
+        if (filters.status === 'pending' && task.isCompleted) return false;
+      }
+
+      // סינון לפי עדיפות
+      if (filters.priority !== 'all' && task.priority !== filters.priority) {
+        return false;
+      }
+
+      return true;
+    });
+  };
+
+  // פונקציה מאוחדת שקודם מחפשת ואז מסננת
+  const getFilteredTasks = () => {
+    if (searchQuery) {
+      // אם יש חיפוש, קודם מחפשים בכל המשימות
+      return searchTasks(tasks);
+    } else {
+      // אם אין חיפוש, מפעילים את הסינונים
+      return filterTasks(tasks);
+    }
+  };
+
+  // עדכון הרינדור של הדשבורד - החלק הרלוונטי
   const renderDashboard = () => (
-    <div className="h-screen flex flex-col bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b">
-        <div className="p-4">
-          <div className="flex items-center justify-between mb-4">
-            <h1 className="text-2xl font-bold text-gray-800">המשימות שלי</h1>
-            <div className="flex items-center gap-3">
-              <button className="p-2 hover:bg-gray-100 rounded-lg relative">
+    <div className="h-screen flex flex-col bg-gray-100">
+      <header className="bg-white shadow-sm">
+        <div className="max-w-7xl mx-auto p-6">
+          {/* כותרת וכפתור משימה חדשה */}
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">המשימות שלי</h1>
+              <p className="mt-1 text-gray-500">ניהול וארגון המשימות שלך במקום אחד</p>
+            </div>
+            <div className="flex items-center gap-4">
+              <button className="p-2 hover:bg-gray-50 rounded-full relative">
                 <Bell className="w-6 h-6 text-gray-500" />
                 <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
               </button>
               <button 
                 onClick={() => setShowNewTask(true)}
-                className="px-4 py-2 bg-blue-500 text-white rounded-lg flex items-center gap-2 hover:bg-blue-600"
+                className="px-5 py-2.5 bg-blue-600 text-white rounded-full flex items-center gap-2 hover:bg-blue-700 transition-colors shadow-sm"
               >
                 <PlusCircle className="w-5 h-5" />
                 <span>משימה חדשה</span>
@@ -203,147 +286,244 @@ function App() {
             </div>
           </div>
 
-          {/* Search and Filter Bar */}
-          <div className="flex gap-2 mb-4">
-            <div className="relative flex-1">
-              <Search className="w-5 h-5 text-gray-400 absolute right-3 top-2.5" />
-              <input
-                type="text"
-                placeholder="...חיפוש משימות"
-                className="w-full pr-10 pl-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <button 
-              onClick={() => setShowAdvancedFilter(!showAdvancedFilter)}
-              className={`p-2 border rounded-lg ${
-                showAdvancedFilter 
-                  ? 'bg-blue-50 text-blue-600 border-blue-200' 
-                  : 'border-gray-300 text-gray-500 hover:bg-gray-50'
-              }`}
-            >
-              <Filter className="w-5 h-5" />
-            </button>
-          </div>
-
-          {/* Quick Filter Tabs */}
-          <div className="flex gap-2 mb-4">
-            {['today', 'week', 'month', 'all'].map((tab) => (
+          {/* חיפוש */}
+          <div className="relative mb-8 group">
+            <Search className="w-5 h-5 text-gray-400 absolute right-4 top-3.5 group-focus-within:text-blue-500 transition-colors" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="חיפוש לפי כותרת, תיאור או מיקום..."
+              className="w-full pr-12 pl-4 py-3 bg-gray-50 border-0 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
+            />
+            {searchQuery && (
               <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`px-4 py-2 rounded-lg ${
-                  activeTab === tab 
-                    ? 'bg-gray-900 text-white' 
-                    : 'text-gray-600 hover:bg-gray-100'
-                }`}
+                onClick={() => setSearchQuery('')}
+                className="absolute left-4 top-3.5 text-gray-400 hover:text-gray-600"
               >
-                {tab === 'today' && 'היום'}
-                {tab === 'week' && 'השבוע'}
-                {tab === 'month' && 'החודש'}
-                {tab === 'all' && 'הכל'}
+                <X className="w-5 h-5" />
               </button>
-            ))}
+            )}
           </div>
 
-          {/* Quick Stats */}
-          <div className="grid grid-cols-3 gap-4">
-            <div className="bg-blue-50 p-3 rounded-lg">
-              <div className="text-blue-600 text-sm font-medium">משימות להיום</div>
-              <div className="mt-1 flex justify-between items-center">
-                <span className="text-2xl font-bold text-blue-700">8</span>
-                <Calendar className="w-5 h-5 text-blue-500" />
+          {/* הודעת סינון מורחבת */}
+          {(searchQuery || activeCategory !== 'all') && (
+            <div className="py-4 px-6 bg-blue-50 rounded-2xl text-blue-600 text-sm mb-6 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                {activeCategory !== 'all' && (
+                  <span className="flex items-center gap-2">
+                    <span>קטגוריה: {categories.find(c => c.id === activeCategory)?.name}</span>
+                    {searchQuery && <span className="text-gray-400">|</span>}
+                  </span>
+                )}
+                {searchQuery && (
+                  <span>חיפוש: "{searchQuery}"</span>
+                )}
+              </div>
+              <button
+                onClick={() => {
+                  if (searchQuery) setSearchQuery('');
+                  if (activeCategory !== 'all') setActiveCategory('all');
+                }}
+                className="text-blue-600 hover:text-blue-700 text-sm"
+              >
+                נקה הכל
+              </button>
+            </div>
+          )}
+
+          {/* סרגל סינון - מוצג רק כשאין חיפוש */}
+          {!searchQuery && (
+            <div className="flex flex-col gap-4">
+              {/* כותרת הסינון */}
+              <div className="flex items-center gap-2 text-gray-600">
+                <Filter className="w-4 h-4" />
+                <span className="text-sm font-medium">סינון וסידור</span>
+              </div>
+              
+              <div className="flex flex-wrap gap-4">
+                {/* סינון לפי תאריך */}
+                <div className="flex items-center gap-2 bg-white p-1 rounded-2xl shadow-sm border border-gray-100">
+                  <button
+                    onClick={() => setFilters(prev => ({ ...prev, date: 'today' }))}
+                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                      filters.date === 'today' 
+                        ? 'bg-blue-600 text-white shadow-sm' 
+                        : 'text-gray-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    היום
+                  </button>
+                  <button
+                    onClick={() => setFilters(prev => ({ ...prev, date: 'week' }))}
+                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                      filters.date === 'week' 
+                        ? 'bg-blue-600 text-white shadow-sm' 
+                        : 'text-gray-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    השבוע
+                  </button>
+                  <button
+                    onClick={() => setFilters(prev => ({ ...prev, date: 'month' }))}
+                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                      filters.date === 'month' 
+                        ? 'bg-blue-600 text-white shadow-sm' 
+                        : 'text-gray-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    החודש
+                  </button>
+                  <button
+                    onClick={() => setFilters(prev => ({ ...prev, date: 'all' }))}
+                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                      filters.date === 'all' 
+                        ? 'bg-blue-600 text-white shadow-sm' 
+                        : 'text-gray-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    הכל
+                  </button>
+                </div>
+
+                {/* סינון לפי סטטוס */}
+                <div className="flex items-center gap-2 bg-white p-1 rounded-2xl shadow-sm border border-gray-100">
+                  <button
+                    onClick={() => setFilters(prev => ({ ...prev, status: 'all' }))}
+                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                      filters.status === 'all' 
+                        ? 'bg-blue-600 text-white shadow-sm' 
+                        : 'text-gray-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    הכל
+                  </button>
+                  <button
+                    onClick={() => setFilters(prev => ({ ...prev, status: 'pending' }))}
+                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                      filters.status === 'pending' 
+                        ? 'bg-blue-600 text-white shadow-sm' 
+                        : 'text-gray-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    בתהליך
+                  </button>
+                  <button
+                    onClick={() => setFilters(prev => ({ ...prev, status: 'completed' }))}
+                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                      filters.status === 'completed' 
+                        ? 'bg-blue-600 text-white shadow-sm' 
+                        : 'text-gray-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    הושלמו
+                  </button>
+                </div>
+
+                {/* סינון לפי עדיפות */}
+                <div className="flex items-center gap-2 bg-white p-1 rounded-2xl shadow-sm border border-gray-100">
+                  <button
+                    onClick={() => setFilters(prev => ({ ...prev, priority: 'all' }))}
+                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                      filters.priority === 'all' 
+                        ? 'bg-blue-600 text-white shadow-sm' 
+                        : 'text-gray-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    כל העדיפויות
+                  </button>
+                  <button
+                    onClick={() => setFilters(prev => ({ ...prev, priority: 'high' }))}
+                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-2 ${
+                      filters.priority === 'high' 
+                        ? 'bg-red-500 text-white shadow-sm' 
+                        : 'text-gray-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    <span className="w-2 h-2 rounded-full bg-red-400"></span>
+                    גבוהה
+                  </button>
+                  <button
+                    onClick={() => setFilters(prev => ({ ...prev, priority: 'medium' }))}
+                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-2 ${
+                      filters.priority === 'medium' 
+                        ? 'bg-yellow-500 text-white shadow-sm' 
+                        : 'text-gray-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    <span className="w-2 h-2 rounded-full bg-yellow-400"></span>
+                    בינונית
+                  </button>
+                  <button
+                    onClick={() => setFilters(prev => ({ ...prev, priority: 'low' }))}
+                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-2 ${
+                      filters.priority === 'low' 
+                        ? 'bg-green-500 text-white shadow-sm' 
+                        : 'text-gray-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    <span className="w-2 h-2 rounded-full bg-green-400"></span>
+                    נמוכה
+                  </button>
+                </div>
               </div>
             </div>
-            <div className="bg-yellow-50 p-3 rounded-lg">
-              <div className="text-yellow-600 text-sm font-medium">בתהליך</div>
-              <div className="mt-1 flex justify-between items-center">
-                <span className="text-2xl font-bold text-yellow-700">12</span>
-                <Clock className="w-5 h-5 text-yellow-500" />
-              </div>
+          )}
+
+          {/* הודעה כשיש חיפוש פעיל */}
+          {searchQuery && (
+            <div className="py-4 px-6 bg-blue-50 rounded-2xl text-blue-600 text-sm">
+              מציג תוצאות חיפוש עבור: "{searchQuery}"
             </div>
-            <div className="bg-green-50 p-3 rounded-lg">
-              <div className="text-green-600 text-sm font-medium">הושלמו השבוע</div>
-              <div className="mt-1 flex justify-between items-center">
-                <span className="text-2xl font-bold text-green-700">15</span>
-                <CheckCircle className="w-5 h-5 text-green-500" />
-              </div>
-            </div>
-          </div>
+          )}
         </div>
       </header>
 
-      {/* Advanced Filter */}
-      {showAdvancedFilter && (
-        <div className="mb-4 p-4 bg-gray-50 rounded-lg border">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="font-medium">סינון מתקדם</h3>
-            <button 
-              onClick={() => setShowAdvancedFilter(false)}
-              className="text-gray-400 hover:text-gray-600"
-            >
-              <X className="w-5 h-5" />
-            </button>
+      {/* רשימת המשימות */}
+      <div className="flex-1 overflow-auto">
+        <div className="max-w-7xl mx-auto p-6">
+          <div className="space-y-4">
+            {getFilteredTasks().map(task => (
+              <TaskItem
+                key={task.id}
+                task={task}
+                onTaskUpdate={handleTaskUpdate}
+                onTaskDelete={handleTaskDelete}
+                onTaskEdit={handleTaskEdit}
+                categories={categories}
+              />
+            ))}
+            {getFilteredTasks().length === 0 && (
+              <div className="text-center py-12 bg-white rounded-2xl shadow-sm border border-gray-100">
+                <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Search className="w-8 h-8 text-gray-400" />
+                </div>
+                <p className="text-gray-500 text-lg">
+                  {searchQuery 
+                    ? 'לא נמצאו תוצאות לחיפוש זה'
+                    : 'לא נמצאו משימות התואמות את הסינון'
+                  }
+                </p>
+                <div className="mt-4">
+                  {searchQuery ? (
+                    <button 
+                      onClick={() => setSearchQuery('')}
+                      className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                    >
+                      נקה חיפוש וחזור לתצוגה רגילה
+                    </button>
+                  ) : (
+                    <button 
+                      onClick={() => setFilters({ date: 'all', status: 'all', priority: 'all' })}
+                      className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                    >
+                      נקה סינון
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-sm text-gray-600 mb-1">סטטוס</label>
-              <select className="w-full p-2 border rounded-lg">
-                <option>הכל</option>
-                <option>ממתין</option>
-                <option>בתהליך</option>
-                <option>הושלם</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm text-gray-600 mb-1">עדיפות</label>
-              <select className="w-full p-2 border rounded-lg">
-                <option>הכל</option>
-                <option>גבוהה</option>
-                <option>בינונית</option>
-                <option>נמוכה</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm text-gray-600 mb-1">קטגוריה</label>
-              <select className="w-full p-2 border rounded-lg">
-                <option value="all">הכל</option>
-                {categories
-                  .filter(cat => cat.id !== 'all')
-                  .map(category => (
-                    <option key={category.id} value={category.id}>
-                      {category.name}
-                    </option>
-                  ))
-                }
-              </select>
-            </div>
-            <div className="flex items-end">
-              <button className="w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
-                החל סינון
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Task List */}
-      <div className="flex-1 p-4 overflow-auto">
-        <div className="space-y-3">
-          {getFilteredTasks().map(task => (
-            <TaskItem
-              key={task.id}
-              task={task}
-              onTaskUpdate={handleTaskUpdate}
-              onTaskDelete={handleTaskDelete}
-              onTaskEdit={handleTaskEdit}
-              categories={categories}
-            />
-          ))}
-          {getFilteredTasks().length === 0 && (
-            <div className="text-center text-gray-500 py-8">
-              <p>אין משימות בקטגוריה זו</p>
-            </div>
-          )}
         </div>
       </div>
     </div>
@@ -384,89 +564,111 @@ function App() {
 
   // עדכון הפונקציה לטיפול בלחיצה על קטגוריה
   const handleCategoryClick = (categoryId: string) => {
-    setActiveCategory(categoryId);  // עדכון הקטגוריה הפעילה
-    setCurrentView('dashboard');    // מעבר למסך הראשי
+    setActiveCategory(categoryId);
+
+    // אם נמצאים בהגדרות, לא עושים כלום
+    if (currentView === 'settings') {
+      return;
+    }
+
+    // אם נמצאים בדשבורד או יומן, רק מעדכנים את הקטגוריה הפעילה
+    // אם נמצאים בסטטיסטיקות, נשארים שם
+    // אין צורך לעבור לדשבורד
   };
+
+  // עדכון הרינדור של הסרגל הצידי
+  const renderSidebar = () => (
+    <aside className="bg-white border-l hidden md:flex flex-col">
+      {/* Sidebar Header */}
+      <div className="p-4 border-b flex items-center justify-between">
+        {isSidebarOpen && (
+          <div className="flex items-center gap-2">
+            <ListTodo className="w-6 h-6 text-blue-500" />
+            <span className="text-xl font-bold">תפריט</span>
+          </div>
+        )}
+        <button
+          onClick={() => setSidebarOpen(!isSidebarOpen)}
+          className="p-2 hover:bg-gray-100 rounded-lg"
+        >
+          {isSidebarOpen ? 
+            <ChevronRight className="w-5 h-5 text-gray-500" /> :
+            <ChevronLeft className="w-5 h-5 text-gray-500" />
+          }
+        </button>
+      </div>
+
+      {/* Main Navigation */}
+      <nav className="flex-1 overflow-y-auto p-4">
+        <div className="space-y-2 mb-8">
+          {navItems.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => setCurrentView(item.id)}
+              title={!isSidebarOpen ? item.label : undefined}
+              className={`w-full flex items-center px-3 py-2 rounded-lg ${
+                currentView === item.id 
+                  ? 'text-blue-600 bg-blue-50'
+                  : 'text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              <item.icon className={`w-5 h-5 ${isSidebarOpen ? 'ml-3' : 'mx-auto'}`} />
+              {isSidebarOpen && <span>{item.label}</span>}
+            </button>
+          ))}
+        </div>
+
+        {/* Categories */}
+        <div className="space-y-1">
+          {categories.map((category) => (
+            <button
+              key={category.id}
+              onClick={() => handleCategoryClick(category.id)}
+              title={!isSidebarOpen ? `${category.name} (${category.count})` : undefined}
+              className={`w-full px-3 py-2 rounded-lg text-right flex items-center transition-all ${
+                activeCategory === category.id 
+                  ? 'bg-gray-100 font-medium'
+                  : 'hover:bg-gray-50'
+              } ${
+                // מוסיפים disabled style כשנמצאים בהגדרות
+                currentView === 'settings' 
+                  ? 'opacity-50 cursor-not-allowed' 
+                  : ''
+              }`}
+              // מבטלים את הלחיצה בהגדרות
+              disabled={currentView === 'settings'}
+            >
+              <span className={`w-2 h-2 rounded-full ${getColorClass(category.color)}`} />
+              {isSidebarOpen && (
+                <>
+                  <span className="mr-3 text-gray-700">{category.name}</span>
+                  <span className={`mr-auto text-sm ${
+                    activeCategory === category.id 
+                      ? 'text-blue-600'
+                      : 'text-gray-400'
+                  }`}>
+                    {category.count}
+                  </span>
+                </>
+              )}
+            </button>
+          ))}
+          <button 
+            onClick={() => setShowNewCategory(true)}
+            title={!isSidebarOpen ? "הוסף קטגוריה חדשה" : undefined}
+            className="w-full px-3 py-2 text-right flex items-center text-gray-500 hover:bg-gray-50 rounded-lg"
+          >
+            <Plus className={`w-4 h-4 ${isSidebarOpen ? 'ml-3' : 'mx-auto'}`} />
+            {isSidebarOpen && <span>קטגוריה חדשה</span>}
+          </button>
+        </div>
+      </nav>
+    </aside>
+  );
 
   return (
     <div className="h-screen flex bg-gray-50 text-right" dir="rtl">
-      {/* Sidebar */}
-      <aside className="bg-white border-l hidden md:flex flex-col">
-        {/* Sidebar Header */}
-        <div className="p-4 border-b flex items-center justify-between">
-          {isSidebarOpen && (
-            <div className="flex items-center gap-2">
-              <ListTodo className="w-6 h-6 text-blue-500" />
-              <span className="text-xl font-bold">תפריט</span>
-            </div>
-          )}
-          <button
-            onClick={() => setSidebarOpen(!isSidebarOpen)}
-            className="p-2 hover:bg-gray-100 rounded-lg"
-          >
-            {isSidebarOpen ? 
-              <ChevronRight className="w-5 h-5 text-gray-500" /> :
-              <ChevronLeft className="w-5 h-5 text-gray-500" />
-            }
-          </button>
-        </div>
-
-        {/* Main Navigation */}
-        <nav className="flex-1 overflow-y-auto p-4">
-          <div className="space-y-2">
-            {navItems.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => setCurrentView(item.id)}
-                className={`w-full flex items-center px-3 py-2 rounded-lg ${
-                  currentView === item.id 
-                    ? 'text-blue-600 bg-blue-50'
-                    : 'text-gray-600 hover:bg-gray-50'
-                }`}
-              >
-                <item.icon className={`w-5 h-5 ${isSidebarOpen ? 'ml-3' : 'mx-auto'}`} />
-                {isSidebarOpen && <span>{item.label}</span>}
-              </button>
-            ))}
-          </div>
-
-          {/* Categories */}
-          <div className="mt-8">
-            <div className="flex items-center justify-between mb-4">
-              {isSidebarOpen && <h2 className="font-semibold text-gray-600">קטגוריות</h2>}
-              <button 
-                onClick={() => setShowNewCategory(true)}
-                className="p-2 hover:bg-gray-100 rounded-full"
-              >
-                <Plus className={`w-4 h-4 text-gray-500 ${
-                  isSidebarOpen ? '' : 'mx-auto'
-                }`} />
-              </button>
-            </div>
-            <div className="space-y-1">
-              {categories.map((category) => (
-                <button
-                  key={category.id}
-                  onClick={() => handleCategoryClick(category.id)}  // שימוש בפונקציה החדשה
-                  className={`w-full px-3 py-2 rounded-lg text-right flex items-center ${
-                    activeCategory === category.id 
-                      ? 'bg-gray-100'
-                      : 'hover:bg-gray-50'
-                  }`}
-                >
-                  <span className={`w-2 h-2 rounded-full ${getColorClass(category.color)}`} />
-                  {isSidebarOpen && (
-                    <>
-                      <span className="ml-3 text-gray-700">{category.name}</span>
-                      <span className="ml-auto text-sm text-gray-400">{category.count}</span>
-                    </>
-                  )}
-                </button>
-              ))}
-            </div>
-          </div>
-        </nav>
-      </aside>
+      {renderSidebar()}
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden pb-16 md:pb-0">
@@ -494,6 +696,7 @@ function App() {
             {currentView === 'calendar' && (
               <CalendarView 
                 tasks={tasks}
+                activeCategory={activeCategory}
                 onTaskClick={handleTaskClick}
                 onNewTask={() => setShowNewTask(true)}
               />
@@ -502,6 +705,7 @@ function App() {
               <AnalyticsDashboard 
                 tasks={tasks}
                 categories={categories}
+                activeCategory={activeCategory}
               />
             )}
             {currentView === 'settings' && (
