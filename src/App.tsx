@@ -151,19 +151,28 @@ function App() {
 
   // פונקציות לטיפול במשימות
   const handleTaskUpdate = (updatedTask: Task) => {
-    setTasks(prevTasks => 
-      prevTasks.map(task => 
-        task.id === updatedTask.id ? updatedTask : task
-      )
-    );
+    if (updatedTask.id) {
+      // עדכון משימה קיימת
+      setTasks(prevTasks => 
+        prevTasks.map(task => 
+          task.id === updatedTask.id ? updatedTask : task
+        )
+      );
+    } else {
+      // הוספת משימה חדשה (למקרה של שכפול)
+      setTasks(prevTasks => [...prevTasks, { 
+        ...updatedTask, 
+        id: Math.max(...prevTasks.map(t => t.id ?? 0)) + 1 
+      }]);
+    }
   };
 
   const handleTaskDelete = (taskId: number) => {
     setTasks(prevTasks => prevTasks.filter(task => task.id !== taskId));
   };
 
-  const handleTaskEdit = () => {
-    setSelectedTaskId(selectedTaskId);
+  const handleTaskEdit = (taskId: number) => {
+    setSelectedTaskId(taskId);
     setShowNewTask(true);
   };
 
@@ -249,7 +258,7 @@ function App() {
     });
   };
 
-  // פונקציה מאוחדת שקודם מחפשת ואז מסננת
+  // פונקציה מאוח�� שקודם מחפשת ואז מסננת
   const getFilteredTasks = () => {
     if (searchQuery) {
       // אם יש חיפוש, קודם מחפשים בכל המשימות
@@ -490,7 +499,11 @@ function App() {
                 onTaskUpdate={handleTaskUpdate}
                 onTaskDelete={handleTaskDelete}
                 onTaskEdit={handleTaskEdit}
+                onTaskClick={handleTaskClick}
                 categories={categories}
+                isMenuOpen={openMenuTaskId === task.id}
+                onMenuToggle={handleMenuToggle}
+                setNotification={setNotification}
               />
             ))}
             {getFilteredTasks().length === 0 && (
@@ -666,6 +679,44 @@ function App() {
     </aside>
   );
 
+  // הוספת state לניהול התפריט הפתוח
+  const [openMenuTaskId, setOpenMenuTaskId] = useState<number | null>(null);
+
+  // פונקציה לטיפול בפתיחה/סגירה של תפריט
+  const handleMenuToggle = (taskId: number | null) => {
+    setOpenMenuTaskId(taskId);
+  };
+
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  // הוספת state להודעות
+  const [notification, setNotification] = useState<{
+    message: string;
+    type: 'success' | 'error';
+  } | null>(null);
+
+  // עדכון פונקציית השכפול במודל
+  const handleDuplicate = (task: Task) => {
+    const newTask = {
+      ...task,
+      id: Math.max(...tasks.map(t => t.id ?? 0)) + 1,
+      title: `העתק של ${task.title}`
+    };
+    setTasks(prev => [...prev, newTask]);
+    setShowTaskDetails(false);
+    
+    // הצגת הודעת הצלחה
+    setNotification({
+      message: 'המשימה שוכפלה בהצלחה',
+      type: 'success'
+    });
+
+    // הסרת ההודעה אחרי 3 שניות
+    setTimeout(() => {
+      setNotification(null);
+    }, 3000);
+  };
+
   return (
     <div className="h-screen flex bg-gray-50 text-right" dir="rtl">
       {renderSidebar()}
@@ -765,16 +816,38 @@ function App() {
                 <div>
                   <div className="flex items-center gap-2">
                     <h2 className="text-xl font-bold">{tasks.find(t => t.id === selectedTaskId)?.title}</h2>
-                    <span className="px-2 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">
-                      {tasks.find(t => t.id === selectedTaskId)?.category}
-                    </span>
+                    {(() => {
+                      const task = tasks.find(t => t.id === selectedTaskId);
+                      const category = categories.find(c => c.id === task?.category);
+                      if (category) {
+                        const colors: Record<ColorType, { bg: string; text: string }> = {
+                          blue: { bg: 'bg-blue-100', text: 'text-blue-800' },
+                          green: { bg: 'bg-green-100', text: 'text-green-800' },
+                          yellow: { bg: 'bg-yellow-100', text: 'text-yellow-800' },
+                          red: { bg: 'bg-red-100', text: 'text-red-800' },
+                          purple: { bg: 'bg-purple-100', text: 'text-purple-800' },
+                          pink: { bg: 'bg-pink-100', text: 'text-pink-800' },
+                          indigo: { bg: 'bg-indigo-100', text: 'text-indigo-800' },
+                          teal: { bg: 'bg-teal-100', text: 'text-teal-800' },
+                          orange: { bg: 'bg-orange-100', text: 'text-orange-800' },
+                          cyan: { bg: 'bg-cyan-100', text: 'text-cyan-800' }
+                        };
+                        return (
+                          <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${colors[category.color].bg} ${colors[category.color].text}`}>
+                            <span className={`w-1.5 h-1.5 rounded-full bg-${category.color}-500 mr-2`}></span>
+                            {category.name}
+                          </span>
+                        );
+                      }
+                      return null;
+                    })()}
                   </div>
                   <div className="flex items-center gap-4 mt-2 text-gray-600">
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1 bg-gray-50 px-2 py-1 rounded-lg">
                       <Calendar className="w-4 h-4" />
                       <span>{tasks.find(t => t.id === selectedTaskId)?.dueDate}</span>
                     </div>
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1 bg-gray-50 px-2 py-1 rounded-lg">
                       <Clock className="w-4 h-4" />
                       <span>{tasks.find(t => t.id === selectedTaskId)?.dueTime}</span>
                     </div>
@@ -782,9 +855,11 @@ function App() {
                 </div>
                 <button 
                   onClick={() => setShowTaskDetails(false)}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="p-2 bg-blue-100 hover:bg-blue-200 text-blue-600 rounded-full transition-colors group"
+                  title="סגור חלון"
+                  aria-label="סגור חלון פרטי משימה"
                 >
-                  <X className="w-6 h-6" />
+                  <X className="w-5 h-5 group-hover:scale-110 transition-transform" />
                 </button>
               </div>
             </div>
@@ -794,12 +869,12 @@ function App() {
               {/* Details */}
               <div className="space-y-4">
                 {tasks.find(t => t.id === selectedTaskId)?.location && (
-                  <div className="flex items-center gap-2 text-gray-600">
+                  <div className="flex items-center gap-2 text-gray-600 bg-gray-50 p-3 rounded-lg">
                     <MapPin className="w-5 h-5" />
                     <span>{tasks.find(t => t.id === selectedTaskId)?.location}</span>
                   </div>
                 )}
-                <div className="flex items-center gap-2 text-gray-600">
+                <div className="flex items-center gap-2 text-gray-600 bg-gray-50 p-3 rounded-lg">
                   <AlertCircle className="w-5 h-5" />
                   <span className={`px-2 py-1 rounded-full ${
                     getPriorityDetails(tasks.find(t => t.id === selectedTaskId)?.priority || '').bgColor
@@ -807,7 +882,7 @@ function App() {
                     עדיפות {getPriorityDetails(tasks.find(t => t.id === selectedTaskId)?.priority || '').text}
                   </span>
                 </div>
-                <div className="flex items-center gap-2 text-gray-600">
+                <div className="flex items-center gap-2 text-gray-600 bg-gray-50 p-3 rounded-lg">
                   <Bell className="w-5 h-5" />
                   <span>תזכורת {tasks.find(t => t.id === selectedTaskId)?.reminder} דקות לפני</span>
                 </div>
@@ -827,7 +902,9 @@ function App() {
                     setShowNewTask(true);
                     setShowTaskDetails(false);
                   }}
-                  className="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg flex items-center gap-2 hover:bg-gray-200"
+                  className="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg flex items-center gap-2 hover:bg-gray-200 transition-colors"
+                  title="ערוך משימ"
+                  aria-label="ערוך את פרטי המשימה"
                 >
                   <Edit className="w-4 h-4" />
                   עריכה
@@ -836,26 +913,21 @@ function App() {
                   onClick={() => {
                     const task = tasks.find(t => t.id === selectedTaskId);
                     if (task) {
-                      const newTask = {
-                        ...task,
-                        id: Math.max(...tasks.map(t => t.id ?? 0)) + 1,
-                        title: `העתק של ${task.title}`
-                      };
-                      setTasks(prev => [...prev, newTask]);
+                      handleDuplicate(task);
                     }
-                    setShowTaskDetails(false);
                   }}
-                  className="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg flex items-center gap-2 hover:bg-gray-200"
+                  className="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg flex items-center gap-2 hover:bg-gray-200 transition-colors"
+                  title="שכפל משימה"
+                  aria-label="צור העתק של המשימה"
                 >
                   <Copy className="w-4 h-4" />
                   שכפול
                 </button>
                 <button 
-                  onClick={() => {
-                    handleTaskDelete(selectedTaskId);
-                    setShowTaskDetails(false);
-                  }}
-                  className="px-4 py-2 bg-red-50 text-red-600 rounded-lg flex items-center gap-2 hover:bg-red-100"
+                  onClick={() => setShowDeleteConfirm(true)}
+                  className="px-4 py-2 bg-red-50 text-red-600 rounded-lg flex items-center gap-2 hover:bg-red-100 transition-colors"
+                  title="מחק משימה"
+                  aria-label="מחק את המשימה לצמיתות"
                 >
                   <Trash2 className="w-4 h-4" />
                   מחיקה
@@ -867,7 +939,9 @@ function App() {
             <div className="p-6 border-t bg-gray-50 rounded-b-lg">
               <button
                 onClick={() => setShowTaskDetails(false)}
-                className="w-full px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                title="סגור חלון"
+                aria-label="סגור חלון פרטי משימה"
               >
                 סגירה
               </button>
@@ -892,6 +966,51 @@ function App() {
             setShowNewCategory(false);
           }}
         />
+      )}
+
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[60]">
+          <div className="bg-white rounded-lg w-full max-w-md p-6">
+            <div className="flex items-center gap-2 text-red-600 mb-4">
+              <AlertCircle className="w-6 h-6" />
+              <span className="text-lg font-medium">אישור מחיקה</span>
+            </div>
+            <p className="text-gray-600 mb-6">
+              האם אתה בטוח שברצונך למחוק את המשימה "{tasks.find(t => t.id === selectedTaskId)?.title}"?
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  if (selectedTaskId) {  // וידוא שיש ID למחיקה
+                    handleTaskDelete(selectedTaskId);
+                    setShowDeleteConfirm(false);
+                    setShowTaskDetails(false);
+                  }
+                }}
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+              >
+                כן, מחק
+              </button>
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                ביטול
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* הודעת הצלחה */}
+      {notification && (
+        <div className={`fixed bottom-20 md:bottom-6 left-1/2 transform -translate-x-1/2 
+          px-4 py-2 rounded-lg shadow-lg z-[100] flex items-center gap-2
+          ${notification.type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}
+        >
+          <div className="w-2 h-2 rounded-full bg-white"></div>
+          {notification.message}
+        </div>
       )}
     </div>
   );

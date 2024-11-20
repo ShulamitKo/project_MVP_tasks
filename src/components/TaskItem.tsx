@@ -14,8 +14,12 @@ interface TaskItemProps {
   task: Task;
   onTaskUpdate: (task: Task) => void;
   onTaskDelete: (id: number) => void;
-  onTaskEdit: () => void;
+  onTaskEdit: (id: number) => void;
+  onTaskClick: (id: number) => void;
   categories: Category[];
+  isMenuOpen: boolean;
+  onMenuToggle: (taskId: number | null) => void;
+  setNotification: React.Dispatch<React.SetStateAction<{ message: string; type: 'success' | 'error' } | null>>;
 }
 
 const TaskItem: React.FC<TaskItemProps> = ({
@@ -23,10 +27,12 @@ const TaskItem: React.FC<TaskItemProps> = ({
   onTaskUpdate,
   onTaskDelete,
   onTaskEdit,
-  categories
+  onTaskClick,
+  categories,
+  isMenuOpen,
+  onMenuToggle,
+  setNotification
 }) => {
-  const [showMenu, setShowMenu] = useState(false);
-
   const handleComplete = () => {
     onTaskUpdate({ ...task, isCompleted: !task.isCompleted });
   };
@@ -40,9 +46,19 @@ const TaskItem: React.FC<TaskItemProps> = ({
       ...task,
       id: undefined,
       title: `העתק של ${task.title}`,
-      isCompleted: false
+      isCompleted: false,
+      isFavorite: false
     };
     onTaskUpdate(newTask);
+    
+    setNotification({
+      message: 'המשימה שוכפלה בהצלחה',
+      type: 'success'
+    });
+
+    setTimeout(() => {
+      setNotification(null);
+    }, 3000);
   };
 
   const getCategory = () => {
@@ -69,15 +85,43 @@ const TaskItem: React.FC<TaskItemProps> = ({
     return `${colors[category.color].bg} ${colors[category.color].text}`;
   };
 
+  const handleActionClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+  };
+
   return (
-    <div className={`bg-white p-4 rounded-lg ${
-      task.priority === 'high' ? 'border-2 border-red-200' : ''
-    } ${task.isCompleted ? 'bg-gray-50' : ''} shadow-sm hover:shadow transition-shadow`}>
+    <div 
+      onClick={() => onTaskClick(task.id!)}
+      className={`bg-white p-4 rounded-2xl shadow-sm border transition-all duration-200 relative
+        ${task.isCompleted 
+          ? 'border-green-100 bg-green-50/30' 
+          : 'border-gray-100 hover:border-blue-200'
+        } 
+        hover:shadow-md cursor-pointer`}
+    >
+      {!task.isCompleted && (
+        <div className={`absolute right-0 top-0 bottom-0 w-1 rounded-tr-2xl rounded-br-2xl
+          ${task.priority === 'high' 
+            ? 'bg-red-500' 
+            : task.priority === 'medium'
+              ? 'bg-yellow-500'
+              : 'bg-green-500'
+          }`}
+        />
+      )}
+      
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-1">
           <button 
-            onClick={handleComplete}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            onClick={(e) => {
+              handleActionClick(e);
+              handleComplete();
+            }}
+            className={`p-2 rounded-full transition-colors
+              ${task.isCompleted 
+                ? 'bg-green-100 hover:bg-green-200' 
+                : 'hover:bg-gray-100'
+              }`}
           >
             <CheckCircle className={`w-6 h-6 ${
               task.isCompleted 
@@ -85,75 +129,83 @@ const TaskItem: React.FC<TaskItemProps> = ({
                 : 'text-gray-400'
             }`} />
           </button>
-          <div>
-            <h3 className={`font-semibold text-lg ${
-              task.isCompleted ? 'line-through text-gray-500' : ''
-            }`}>{task.title}</h3>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <h3 className={`font-semibold text-lg truncate ${
+                task.isCompleted ? 'line-through text-gray-500' : ''
+              }`}>
+                {task.title}
+              </h3>
+              {task.priority === 'high' && !task.isCompleted && (
+                <span className="inline-flex px-2 py-1 text-xs font-medium bg-red-100 text-red-700 rounded-full animate-pulse">
+                  דחוף
+                </span>
+              )}
+            </div>
             <div className="flex items-center gap-2 text-sm text-gray-500 mt-1">
-              <Clock className="w-4 h-4" />
-              <span>{task.dueTime}</span>
+              <div className="flex items-center gap-1 bg-gray-50 px-2 py-1 rounded-lg">
+                <Clock className="w-4 h-4" />
+                <span>{task.dueTime}</span>
+              </div>
               {task.location && (
-                <>
-                  <span className="text-gray-300">|</span>
+                <div className="flex items-center gap-1 bg-gray-50 px-2 py-1 rounded-lg">
                   <MapPin className="w-4 h-4" />
-                  <span>{task.location}</span>
-                </>
+                  <span className="truncate max-w-[150px]">{task.location}</span>
+                </div>
               )}
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          {task.isFavorite && (
-            <Star className="w-5 h-5 text-yellow-500 fill-yellow-500" />
-          )}
+        <div className="flex items-center gap-1">
+          <button
+            onClick={(e) => {
+              handleActionClick(e);
+              handleToggleFavorite();
+            }}
+            className={`p-2 rounded-full transition-colors
+              ${task.isFavorite 
+                ? 'bg-yellow-100 hover:bg-yellow-200' 
+                : 'hover:bg-gray-100'
+              }`}
+          >
+            <Star className={`w-5 h-5 ${
+              task.isFavorite 
+                ? 'text-yellow-500 fill-yellow-500' 
+                : 'text-gray-400 hover:text-yellow-500'
+            }`} />
+          </button>
           <div className="relative">
             <button 
-              onClick={() => setShowMenu(!showMenu)}
-              className="p-2 hover:bg-gray-100 rounded-full"
+              onClick={(e) => {
+                handleActionClick(e);
+                onMenuToggle(isMenuOpen ? null : task.id!);
+              }}
+              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
             >
               <MoreHorizontal className="w-5 h-5 text-gray-500" />
             </button>
-
-            {showMenu && (
-              <TaskActionsMenu
-                task={task}
-                onClose={() => setShowMenu(false)}
-                onEdit={onTaskEdit}
-                onDelete={onTaskDelete}
-                onToggleFavorite={handleToggleFavorite}
-                onDuplicate={handleDuplicate}
-                onChangeDate={(taskId) => {
-                  // TODO: Implement date change
-                  console.log('Change date for task:', taskId);
-                }}
-                onPostpone={(taskId) => {
-                  // TODO: Implement postpone
-                  console.log('Postpone task:', taskId);
-                }}
-                onChangeCategory={(taskId) => {
-                  // TODO: Implement category change
-                  console.log('Change category for task:', taskId);
-                }}
-                onChangePriority={(taskId) => {
-                  // TODO: Implement priority change
-                  console.log('Change priority for task:', taskId);
-                }}
-              />
+            {isMenuOpen && (
+              <div className="absolute top-0 right-full mr-[-120px] z-[9999]">
+                <TaskActionsMenu 
+                  task={task}
+                  onClose={() => onMenuToggle(null)}
+                  onEdit={() => onTaskEdit(task.id!)}
+                  onDelete={onTaskDelete}
+                  onDuplicate={handleDuplicate}
+                  setNotification={setNotification}
+                />
+              </div>
             )}
           </div>
         </div>
       </div>
 
       {/* Tags */}
-      <div className="mt-3 flex gap-2">
+      <div className="mt-3 flex flex-wrap gap-2">
         {getCategory() && (
-          <span className={`px-3 py-1 rounded-full text-sm ${getCategoryColorClass()}`}>
+          <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getCategoryColorClass()}`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${getCategory()?.color.startsWith('bg-') ? getCategory()?.color : `bg-${getCategory()?.color}-500`} mr-2`}></span>
             {getCategory()?.name}
-          </span>
-        )}
-        {task.priority === 'high' && (
-          <span className="px-3 py-1 bg-red-100 text-red-800 text-sm rounded-full">
-            דחוף
           </span>
         )}
       </div>
