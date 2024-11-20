@@ -9,7 +9,6 @@ import {
   Plus,
   Search,
   Bell,
-  PlusCircle,
   Clock,
   Filter,
   X,
@@ -18,7 +17,9 @@ import {
   Edit,
   Copy,
   Trash2,
-  ListTodo
+  ListTodo,
+  ChevronUp,
+  ChevronDown
 } from 'lucide-react';
 import NewTaskForm from './components/NewTaskForm';
 import CalendarView from './components/CalendarView';
@@ -172,8 +173,12 @@ function App() {
   };
 
   const handleTaskEdit = (taskId: number) => {
-    setSelectedTaskId(taskId);
-    setShowNewTask(true);
+    const taskToEdit = tasks.find(t => t.id === taskId);
+    if (taskToEdit) {
+      setSelectedTaskId(taskId);
+      setShowNewTask(true);
+      setShowTaskDetails(false);
+    }
   };
 
   // העברת המשימות ל-CalendarView
@@ -258,7 +263,7 @@ function App() {
     });
   };
 
-  // פונקציה מאוח�� שקודם מחפשת ואז מסננת
+  // פונקציה מא שקודם מחפשת ואז מסננת
   const getFilteredTasks = () => {
     if (searchQuery) {
       // אם יש חיפוש, קודם מחפשים בכל המשימות
@@ -272,226 +277,246 @@ function App() {
   // עדכון הרינדור של הדשבורד - החלק הרלוונטי
   const renderDashboard = () => (
     <div className="h-screen flex flex-col bg-gray-100">
-      <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto p-6">
-          {/* כותרת וכפתור משימה חדשה */}
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">המשימות שלי</h1>
-              <p className="mt-1 text-gray-500">ניהול וארגון המשימות שלך במקום אחד</p>
+      <header className="bg-white shadow-sm relative">
+        <div className="max-w-7xl mx-auto px-4 md:px-6">
+          {/* שורה ראשונה - כותרת, חיפוש וכפתורים */}
+          <div className="flex items-center justify-between py-3 border-b gap-3">
+            {/* כותרת */}
+            <h1 className="text-lg md:text-2xl font-bold text-gray-900 flex-shrink-0">המשימות שלי</h1>
+            
+            {/* חיפוש */}
+            <div className="flex-1 max-w-xl relative group">
+              <div className="absolute inset-0 bg-blue-100/10 rounded-2xl -m-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity pointer-events-none"></div>
+              <Search className="w-5 h-5 text-gray-400 absolute right-4 top-3.5 group-focus-within:text-blue-500 transition-colors" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="חיפוש משימות..."
+                className="w-full pr-12 pl-12 py-3 bg-white border-2 border-gray-100 rounded-2xl focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 hover:border-gray-200 transition-all text-sm font-medium placeholder:text-gray-400"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute left-4 top-3.5 text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              )}
             </div>
-            <div className="flex items-center gap-4">
-              <button className="p-2 hover:bg-gray-50 rounded-full relative">
-                <Bell className="w-6 h-6 text-gray-500" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-              </button>
-              <button 
-                onClick={() => setShowNewTask(true)}
-                className="px-5 py-2.5 bg-blue-600 text-white rounded-full flex items-center gap-2 hover:bg-blue-700 transition-colors shadow-sm"
-              >
-                <PlusCircle className="w-5 h-5" />
-                <span>משימה חדשה</span>
-              </button>
-            </div>
+
+            {/* כפתור צף להוספת משימה */}
+            <button 
+              onClick={() => setShowNewTask(true)}
+              className="bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 transition-all hover:shadow-xl group flex-shrink-0"
+            >
+              <div className="relative p-2.5 md:px-5 md:py-2.5 flex items-center gap-2">
+                <Plus className="w-5 h-5" />
+                <span className="hidden md:inline whitespace-nowrap">משימה חדשה</span>
+              </div>
+            </button>
+
+            {/* התראות */}
+            <button className="p-2 hover:bg-gray-50 rounded-full relative flex-shrink-0">
+              <Bell className="w-5 h-5 text-gray-500" />
+              <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+            </button>
           </div>
 
-          {/* חיפוש */}
-          <div className="relative mb-8 group">
-            <Search className="w-5 h-5 text-gray-400 absolute right-4 top-3.5 group-focus-within:text-blue-500 transition-colors" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="חיפוש לפי כותרת, תיאור או מיקום..."
-              className="w-full pr-12 pl-4 py-3 bg-gray-50 border-0 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                className="absolute left-4 top-3.5 text-gray-400 hover:text-gray-600"
-              >
-                <X className="w-5 h-5" />
-              </button>
+          {/* שורה שנייה - פילטרים */}
+          <div className="py-3">
+            {/* הודעת סינון */}
+            {(searchQuery || activeCategory !== 'all') && (
+              <div className="mb-3 py-2 px-4 bg-blue-50 rounded-xl text-blue-600 text-sm flex items-center justify-between">
+                <div className="flex items-center gap-2 truncate">
+                  {activeCategory !== 'all' && (
+                    <span className="flex items-center gap-2 truncate">
+                      <span className="truncate">קטגוריה: {categories.find(c => c.id === activeCategory)?.name}</span>
+                      {searchQuery && <span className="text-gray-400 mx-1">|</span>}
+                    </span>
+                  )}
+                  {searchQuery && (
+                    <span className="truncate">חיפוש: "{searchQuery}"</span>
+                  )}
+                </div>
+                <button
+                  onClick={() => {
+                    if (searchQuery) setSearchQuery('');
+                    if (activeCategory !== 'all') setActiveCategory('all');
+                  }}
+                  className="text-blue-600 hover:text-blue-700 text-sm flex-shrink-0 mr-2"
+                >
+                  נקה
+                </button>
+              </div>
+            )}
+
+            {/* סרגל סינון - עיצוב משופר */}
+            {!searchQuery && (
+              <>
+                {/* כותרת הסינון - כל השורה לחיצה */}
+                <button 
+                  onClick={() => setShowFilters(!showFilters)}
+                  className="w-full flex items-center justify-between py-2 text-gray-500 hover:text-gray-700 transition-colors md:hidden"
+                >
+                  <div className="flex items-center gap-2">
+                    <Filter className="w-4 h-4" />
+                    <span className="text-sm font-medium">סינון משימות</span>
+                  </div>
+                  
+                  <div className="flex items-center gap-1.5 text-sm">
+                    <span>{showFilters ? 'הסתר פילטרים' : 'הצג פילטרים'}</span>
+                    {showFilters ? (
+                      <ChevronUp className="w-4 h-4" />
+                    ) : (
+                      <ChevronDown className="w-4 h-4" />
+                    )}
+                  </div>
+                </button>
+
+                {/* כותרת קבועה בדסקטופ */}
+                <div className="hidden md:flex items-center gap-2 text-gray-500 mb-3">
+                  <Filter className="w-4 h-4" />
+                  <span className="text-sm font-medium">סינון משימות</span>
+                </div>
+
+                {/* פילטרים - מוסתרים כברירת מחדל במובייל */}
+                <div className={`${showFilters ? 'block' : 'hidden'} md:block`}>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-4">
+                    {/* סינון לפי קטגוריה - חדש */}
+                    <div className="bg-white p-2 rounded-xl shadow-sm border border-gray-100 md:hidden">
+                      <div className="text-xs text-gray-500 font-medium mb-2 px-1 flex items-center gap-1.5">
+                        <ListTodo className="w-3.5 h-3.5" />
+                        <span>קטגוריה</span>
+                      </div>
+                      <div className="flex flex-wrap gap-1">
+                        {categories.map(category => (
+                          <button
+                            key={category.id}
+                            onClick={() => {
+                              setActiveCategory(category.id);
+                              if (window.innerWidth < 768) setShowFilters(false);
+                            }}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                              activeCategory === category.id
+                                ? 'bg-blue-600 text-white shadow-sm'
+                                : 'text-gray-600 hover:bg-gray-50'
+                            }`}
+                          >
+                            <span className={`w-1.5 h-1.5 rounded-full ${getColorClass(category.color)}`} />
+                            <span>{category.name}</span>
+                            <span className="text-xs opacity-75">({category.count})</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* סינון לפי תאריך */}
+                    <div className="bg-white p-2 rounded-xl shadow-sm border border-gray-100">
+                      <div className="text-xs text-gray-500 font-medium mb-2 px-1 flex items-center gap-1.5">
+                        <Calendar className="w-3.5 h-3.5" />
+                        <span>תאריך</span>
+                      </div>
+                      <div className="flex gap-1">
+                        {[
+                          { id: 'today', label: 'היום' },
+                          { id: 'week', label: 'השבוע' },
+                          { id: 'month', label: 'החודש' },
+                          { id: 'all', label: 'הכל' }
+                        ].map(option => (
+                          <button
+                            key={option.id}
+                            onClick={() => {
+                              setFilters(prev => ({ ...prev, date: option.id as any }));
+                              if (window.innerWidth < 768) setShowFilters(false);
+                            }}
+                            className={`flex-1 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                              filters.date === option.id
+                                ? 'bg-blue-600 text-white shadow-sm'
+                                : 'text-gray-600 hover:bg-gray-50'
+                            }`}
+                          >
+                            {option.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* סינון לפי סטטוס */}
+                    <div className="bg-white p-2 rounded-xl shadow-sm border border-gray-100">
+                      <div className="text-xs text-gray-500 font-medium mb-2 px-1 flex items-center gap-1.5">
+                        <ListTodo className="w-3.5 h-3.5" />
+                        <span>סטטוס</span>
+                      </div>
+                      <div className="flex gap-1">
+                        {[
+                          { id: 'all', label: 'הכל' },
+                          { id: 'pending', label: 'בתהליך' },
+                          { id: 'completed', label: 'הושלמו' }
+                        ].map(option => (
+                          <button
+                            key={option.id}
+                            onClick={() => {
+                              setFilters(prev => ({ ...prev, status: option.id as any }));
+                              if (window.innerWidth < 768) setShowFilters(false);
+                            }}
+                            className={`flex-1 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                              filters.status === option.id
+                                ? 'bg-blue-600 text-white shadow-sm'
+                                : 'text-gray-600 hover:bg-gray-50'
+                            }`}
+                          >
+                            {option.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* סינון לפי עדיפות */}
+                    <div className="bg-white p-2 rounded-xl shadow-sm border border-gray-100">
+                      <div className="text-xs text-gray-500 font-medium mb-2 px-1 flex items-center gap-1.5">
+                        <AlertCircle className="w-3.5 h-3.5" />
+                        <span>עדיפות</span>
+                      </div>
+                      <div className="flex gap-1">
+                        {[
+                          { id: 'all', label: 'הכל', color: 'blue' },
+                          { id: 'high', label: 'גבוהה', color: 'red' },
+                          { id: 'medium', label: 'בינונית', color: 'yellow' },
+                          { id: 'low', label: 'נמוכה', color: 'green' }
+                        ].map(option => (
+                          <button
+                            key={option.id}
+                            onClick={() => {
+                              setFilters(prev => ({ ...prev, priority: option.id as any }));
+                              if (window.innerWidth < 768) setShowFilters(false);
+                            }}
+                            className={`flex-1 px-4 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-1.5 ${
+                              filters.priority === option.id
+                                ? `bg-${option.color}-500 text-white shadow-sm`
+                                : 'text-gray-600 hover:bg-gray-50'
+                            }`}
+                          >
+                            {option.id !== 'all' && (
+                              <span className={`w-1.5 h-1.5 rounded-full bg-${option.color}-400`}></span>
+                            )}
+                            {option.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </>
             )}
           </div>
-
-          {/* הודעת סינון מורחבת */}
-          {(searchQuery || activeCategory !== 'all') && (
-            <div className="py-4 px-6 bg-blue-50 rounded-2xl text-blue-600 text-sm mb-6 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                {activeCategory !== 'all' && (
-                  <span className="flex items-center gap-2">
-                    <span>קטגוריה: {categories.find(c => c.id === activeCategory)?.name}</span>
-                    {searchQuery && <span className="text-gray-400">|</span>}
-                  </span>
-                )}
-                {searchQuery && (
-                  <span>חיפוש: "{searchQuery}"</span>
-                )}
-              </div>
-              <button
-                onClick={() => {
-                  if (searchQuery) setSearchQuery('');
-                  if (activeCategory !== 'all') setActiveCategory('all');
-                }}
-                className="text-blue-600 hover:text-blue-700 text-sm"
-              >
-                נקה הכל
-              </button>
-            </div>
-          )}
-
-          {/* סרגל סינון - מוצג רק כשאין חיפוש */}
-          {!searchQuery && (
-            <div className="flex flex-col gap-4">
-              {/* כותרת הסינון */}
-              <div className="flex items-center gap-2 text-gray-600">
-                <Filter className="w-4 h-4" />
-                <span className="text-sm font-medium">סינון וסידור</span>
-              </div>
-              
-              <div className="flex flex-wrap gap-4">
-                {/* סינון לפי תאריך */}
-                <div className="flex items-center gap-2 bg-white p-1 rounded-2xl shadow-sm border border-gray-100">
-                  <button
-                    onClick={() => setFilters(prev => ({ ...prev, date: 'today' }))}
-                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                      filters.date === 'today' 
-                        ? 'bg-blue-600 text-white shadow-sm' 
-                        : 'text-gray-600 hover:bg-gray-50'
-                    }`}
-                  >
-                    היום
-                  </button>
-                  <button
-                    onClick={() => setFilters(prev => ({ ...prev, date: 'week' }))}
-                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                      filters.date === 'week' 
-                        ? 'bg-blue-600 text-white shadow-sm' 
-                        : 'text-gray-600 hover:bg-gray-50'
-                    }`}
-                  >
-                    השבוע
-                  </button>
-                  <button
-                    onClick={() => setFilters(prev => ({ ...prev, date: 'month' }))}
-                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                      filters.date === 'month' 
-                        ? 'bg-blue-600 text-white shadow-sm' 
-                        : 'text-gray-600 hover:bg-gray-50'
-                    }`}
-                  >
-                    החודש
-                  </button>
-                  <button
-                    onClick={() => setFilters(prev => ({ ...prev, date: 'all' }))}
-                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                      filters.date === 'all' 
-                        ? 'bg-blue-600 text-white shadow-sm' 
-                        : 'text-gray-600 hover:bg-gray-50'
-                    }`}
-                  >
-                    הכל
-                  </button>
-                </div>
-
-                {/* סינון לפי סטטוס */}
-                <div className="flex items-center gap-2 bg-white p-1 rounded-2xl shadow-sm border border-gray-100">
-                  <button
-                    onClick={() => setFilters(prev => ({ ...prev, status: 'all' }))}
-                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                      filters.status === 'all' 
-                        ? 'bg-blue-600 text-white shadow-sm' 
-                        : 'text-gray-600 hover:bg-gray-50'
-                    }`}
-                  >
-                    הכל
-                  </button>
-                  <button
-                    onClick={() => setFilters(prev => ({ ...prev, status: 'pending' }))}
-                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                      filters.status === 'pending' 
-                        ? 'bg-blue-600 text-white shadow-sm' 
-                        : 'text-gray-600 hover:bg-gray-50'
-                    }`}
-                  >
-                    בתהליך
-                  </button>
-                  <button
-                    onClick={() => setFilters(prev => ({ ...prev, status: 'completed' }))}
-                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                      filters.status === 'completed' 
-                        ? 'bg-blue-600 text-white shadow-sm' 
-                        : 'text-gray-600 hover:bg-gray-50'
-                    }`}
-                  >
-                    הושלמו
-                  </button>
-                </div>
-
-                {/* סינון לפי עדיפות */}
-                <div className="flex items-center gap-2 bg-white p-1 rounded-2xl shadow-sm border border-gray-100">
-                  <button
-                    onClick={() => setFilters(prev => ({ ...prev, priority: 'all' }))}
-                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                      filters.priority === 'all' 
-                        ? 'bg-blue-600 text-white shadow-sm' 
-                        : 'text-gray-600 hover:bg-gray-50'
-                    }`}
-                  >
-                    כל העדיפויות
-                  </button>
-                  <button
-                    onClick={() => setFilters(prev => ({ ...prev, priority: 'high' }))}
-                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-2 ${
-                      filters.priority === 'high' 
-                        ? 'bg-red-500 text-white shadow-sm' 
-                        : 'text-gray-600 hover:bg-gray-50'
-                    }`}
-                  >
-                    <span className="w-2 h-2 rounded-full bg-red-400"></span>
-                    גבוהה
-                  </button>
-                  <button
-                    onClick={() => setFilters(prev => ({ ...prev, priority: 'medium' }))}
-                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-2 ${
-                      filters.priority === 'medium' 
-                        ? 'bg-yellow-500 text-white shadow-sm' 
-                        : 'text-gray-600 hover:bg-gray-50'
-                    }`}
-                  >
-                    <span className="w-2 h-2 rounded-full bg-yellow-400"></span>
-                    בינונית
-                  </button>
-                  <button
-                    onClick={() => setFilters(prev => ({ ...prev, priority: 'low' }))}
-                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-2 ${
-                      filters.priority === 'low' 
-                        ? 'bg-green-500 text-white shadow-sm' 
-                        : 'text-gray-600 hover:bg-gray-50'
-                    }`}
-                  >
-                    <span className="w-2 h-2 rounded-full bg-green-400"></span>
-                    נמוכה
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* הודעה כשיש חיפוש פעיל */}
-          {searchQuery && (
-            <div className="py-4 px-6 bg-blue-50 rounded-2xl text-blue-600 text-sm">
-              מציג תוצאות חיפוש עבור: "{searchQuery}"
-            </div>
-          )}
         </div>
       </header>
 
       {/* רשימת המשימות */}
-      <div className="flex-1 overflow-auto">
-        <div className="max-w-7xl mx-auto p-6">
-          <div className="space-y-4">
+      <div className="flex-1 overflow-auto relative">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 py-4">
+          <div className="space-y-3">
             {getFilteredTasks().map(task => (
               <TaskItem
                 key={task.id}
@@ -542,7 +567,7 @@ function App() {
     </div>
   );
 
-  // פונקציית עזר להמרת עדיפות לטקסט וצבע - נעדכן את הצבעים
+  // פונקציית עזר להמר עדיפות לטקסט וצבע - נעדכן את הצבעים
   const getPriorityDetails = (priority: string) => {
     switch (priority) {
       case 'high':
@@ -717,75 +742,60 @@ function App() {
     }, 3000);
   };
 
+  // עדכון הפונקציה לסגירת מודל פרטי משימה
+  const handleCloseTaskDetails = () => {
+    setShowTaskDetails(false);
+    setSelectedTaskId(null); // מאפס את ה-ID של המשימה הנבחרת
+  };
+
+  const [showFilters, setShowFilters] = useState(false);
+
   return (
     <div className="h-screen flex bg-gray-50 text-right" dir="rtl">
       {renderSidebar()}
 
-      {/* Main Content */}
+      {/* Main Content - תמיד מוצג */}
       <div className="flex-1 flex flex-col overflow-hidden pb-16 md:pb-0">
-        {showNewTask ? (
-          <NewTaskForm 
-            onClose={() => {
-              setShowNewTask(false);
-              setSelectedTaskId(null);
-            }}
-            initialTask={tasks.find(t => t.id === selectedTaskId)}
-            onSubmit={(updatedTask) => {
-              if (selectedTaskId) {
-                handleTaskUpdate(updatedTask);
-              } else {
-                setTasks(prev => [...prev, { 
-                  ...updatedTask, 
-                  id: Math.max(...prev.map(t => t.id ?? 0)) + 1 
-                }]);
-              }
-            }}
-            categories={categories}
+        {currentView === 'calendar' && (
+          <CalendarView 
+            tasks={tasks}
+            activeCategory={activeCategory}
+            onTaskClick={handleTaskClick}
+            onNewTask={() => setShowNewTask(true)}
           />
-        ) : (
-          <>
-            {currentView === 'calendar' && (
-              <CalendarView 
-                tasks={tasks}
-                activeCategory={activeCategory}
-                onTaskClick={handleTaskClick}
-                onNewTask={() => setShowNewTask(true)}
-              />
-            )}
-            {currentView === 'analytics' && (
-              <AnalyticsDashboard 
-                tasks={tasks}
-                categories={categories}
-                activeCategory={activeCategory}
-              />
-            )}
-            {currentView === 'settings' && (
-              <SettingsScreen 
-                categories={categories}
-                onAddCategory={(category) => {
-                  setCategories(prev => [
-                    ...prev,
-                    {
-                      id: category.name.toLowerCase().replace(/\s+/g, '-'),
-                      name: category.name,
-                      count: 0,
-                      color: category.color
-                    }
-                  ]);
-                }}
-                onEditCategory={(id, updates) => {
-                  setCategories(prev => prev.map(cat => 
-                    cat.id === id ? { ...cat, ...updates } : cat
-                  ));
-                }}
-                onDeleteCategory={(id) => {
-                  setCategories(prev => prev.filter(cat => cat.id !== id));
-                }}
-              />
-            )}
-            {currentView === 'dashboard' && renderDashboard()}
-          </>
         )}
+        {currentView === 'analytics' && (
+          <AnalyticsDashboard 
+            tasks={tasks}
+            categories={categories}
+            activeCategory={activeCategory}
+          />
+        )}
+        {currentView === 'settings' && (
+          <SettingsScreen 
+            categories={categories}
+            onAddCategory={(category) => {
+              setCategories(prev => [
+                ...prev,
+                {
+                  id: category.name.toLowerCase().replace(/\s+/g, '-'),
+                  name: category.name,
+                  count: 0,
+                  color: category.color
+                }
+              ]);
+            }}
+            onEditCategory={(id, updates) => {
+              setCategories(prev => prev.map(cat => 
+                cat.id === id ? { ...cat, ...updates } : cat
+              ));
+            }}
+            onDeleteCategory={(id) => {
+              setCategories(prev => prev.filter(cat => cat.id !== id));
+            }}
+          />
+        )}
+        {currentView === 'dashboard' && renderDashboard()}
       </div>
 
       {/* Bottom Navigation - Mobile */}
@@ -806,10 +816,52 @@ function App() {
         </div>
       </nav>
 
+      {/* Modals - מוצגים מעל התוכן הקיים */}
+      {showNewTask && (
+        <NewTaskForm 
+          onClose={() => {
+            setShowNewTask(false);
+            setSelectedTaskId(null);
+          }}
+          initialTask={selectedTaskId ? tasks.find(t => t.id === selectedTaskId) : undefined}
+          onSubmit={(updatedTask) => {
+            if (selectedTaskId) {
+              // עריכת משימה קיימת
+              handleTaskUpdate({ ...updatedTask, id: selectedTaskId });
+              setNotification({
+                message: 'השינויים נשמרו בהצלחה',
+                type: 'success'
+              });
+            } else {
+              // יצירת משימה חדשה
+              setTasks(prev => [...prev, { 
+                ...updatedTask, 
+                id: Math.max(...prev.map(t => t.id ?? 0)) + 1 
+              }]);
+              setNotification({
+                message: 'המשימה נוצרה בהצלחה',
+                type: 'success'
+              });
+            }
+            setShowNewTask(false);
+            setSelectedTaskId(null);
+            setTimeout(() => setNotification(null), 3000);
+          }}
+          categories={categories}
+        />
+      )}
+
       {/* Task Details Modal */}
       {showTaskDetails && selectedTaskId && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg w-full max-w-xl">
+        <div 
+          className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              handleCloseTaskDetails(); // שימוש בפונקציה החדשה
+            }
+          }}
+        >
+          <div className="bg-white rounded-lg w-full max-w-xl animate-modal-slide-in">
             {/* Header */}
             <div className="p-6 border-b">
               <div className="flex items-start justify-between">
@@ -854,10 +906,10 @@ function App() {
                   </div>
                 </div>
                 <button 
-                  onClick={() => setShowTaskDetails(false)}
+                  onClick={handleCloseTaskDetails} // שימוש בפונקציה החדשה
                   className="p-2 bg-blue-100 hover:bg-blue-200 text-blue-600 rounded-full transition-colors group"
                   title="סגור חלון"
-                  aria-label="סגור חלון פרטי משימה"
+                  aria-label="סגו חלון פרטי משימה"
                 >
                   <X className="w-5 h-5 group-hover:scale-110 transition-transform" />
                 </button>
@@ -927,7 +979,7 @@ function App() {
                   onClick={() => setShowDeleteConfirm(true)}
                   className="px-4 py-2 bg-red-50 text-red-600 rounded-lg flex items-center gap-2 hover:bg-red-100 transition-colors"
                   title="מחק משימה"
-                  aria-label="מחק את המשימה לצמיתות"
+                  aria-label="מחק את המשימה לצמיתו"
                 >
                   <Trash2 className="w-4 h-4" />
                   מחיקה
@@ -938,7 +990,7 @@ function App() {
             {/* Footer */}
             <div className="p-6 border-t bg-gray-50 rounded-b-lg">
               <button
-                onClick={() => setShowTaskDetails(false)}
+                onClick={handleCloseTaskDetails} // שימוש בפונקציה החדשה
                 className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                 title="סגור חלון"
                 aria-label="סגור חלון פרטי משימה"
