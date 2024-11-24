@@ -21,22 +21,37 @@ interface NewTaskFormProps {
   onClose: () => void;
   onSubmit: (task: Task) => void;
   initialTask?: Task;
+  initialDate?: Date | null;
   categories: Category[];
 }
 
-const NewTaskForm: React.FC<NewTaskFormProps> = ({ onClose, onSubmit, initialTask, categories }) => {
-  const [task, setTask] = useState<Task>(initialTask || {
-    title: '',
-    description: '',
-    dueDate: '',
-    dueTime: '',
-    category: '' as TaskCategory,
-    priority: '' as TaskPriority,
-    location: '',
-    reminder: '30',
-    repeat: 'none',
-    isCompleted: false,
-    isFavorite: false
+const NewTaskForm: React.FC<NewTaskFormProps> = ({ onClose, onSubmit, initialTask, initialDate, categories }) => {
+  const [task, setTask] = useState<Task>(() => {
+    if (initialTask) {
+      return initialTask;
+    }
+
+    const defaultDate = initialDate || new Date();
+    const formattedDate = defaultDate.toISOString().split('T')[0];
+    const formattedTime = defaultDate.toLocaleTimeString('he-IL', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    });
+
+    return {
+      title: '',
+      description: '',
+      dueDate: formattedDate,
+      dueTime: formattedTime,
+      category: '' as TaskCategory,
+      priority: '' as TaskPriority,
+      location: '',
+      reminder: '30',
+      repeat: 'none',
+      isCompleted: false,
+      isFavorite: false
+    };
   });
 
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -62,8 +77,6 @@ const NewTaskForm: React.FC<NewTaskFormProps> = ({ onClose, onSubmit, initialTas
   }, [notification]);
 
   const validateForm = () => {
-    const newErrors: typeof errors = {};
-    
     if (!task.title.trim()) {
       setNotification({
         message: 'נא להזין כותרת למשימה',

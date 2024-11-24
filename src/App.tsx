@@ -28,9 +28,7 @@ import SettingsScreen from './components/SettingsScreen';
 import TaskItem from './components/TaskItem';
 import { Task } from './types/task';
 import NewCategoryModal from './components/categories/NewCategoryModal';
-import { ColorType, Category } from './types/category';
-
-type CategoryType = Category;
+import { Category, ColorType } from './types/category';
 
 // עדכון הממשק של הסינונים
 interface FilterState {
@@ -117,12 +115,13 @@ function App() {
     }
   ]);
 
-  // קטגוריות
-  const [categories, setCategories] = useState<CategoryType[]>([
-    { id: 'all', name: 'כל המשימות', count: 12, color: 'blue' },
-    { id: 'personal', name: 'אישי', count: 4, color: 'green' },
-    { id: 'work', name: 'עבודה', count: 6, color: 'yellow' },
-    { id: 'family', name: 'משפחה', count: 2, color: 'red' }
+  // קטגוריות - עם ערך התחלתי ל-count
+  const [categories, setCategories] = useState<Category[]>([
+    { id: 'all', name: 'הכל', color: 'blue', count: 0 },
+    { id: 'work', name: 'עבודה', color: 'red', count: 0 },
+    { id: 'personal', name: 'אישי', color: 'green', count: 0 },
+    { id: 'study', name: 'לימודים', color: 'yellow', count: 0 },
+    { id: 'family', name: 'משפחה', color: 'purple', count: 0 }
   ]);
 
   // פריטי תפריט
@@ -263,7 +262,7 @@ function App() {
     });
   };
 
-  // פונקציה מא שקודם מחפשת ואז מסננת
+  // פונקציה מא שקודם מפשת ואז מסננת
   const getFilteredTasks = () => {
     if (searchQuery) {
       // אם יש חיפוש, קודם מחפשים בכל המשימות
@@ -583,7 +582,7 @@ function App() {
 
   const [showNewCategory, setShowNewCategory] = useState(false);
 
-  // הוספת פונקציה לחישוב מספר המשימות בכל קטגוריה
+  // הוספת פונקציה לחישוב מספר המשימו בכל קטגוריה
   const updateCategoryCounts = () => {
     const newCategories = categories.map(category => ({
       ...category,
@@ -750,6 +749,19 @@ function App() {
 
   const [showFilters, setShowFilters] = useState(false);
 
+  // הוספת state לתאריך ההתחלתי
+  const [initialTaskDate, setInitialTaskDate] = useState<Date | null>(null);
+
+  // עדכון הפונקציה להוספת משימה חדשה
+  const handleNewTask = (dateOrEvent?: React.MouseEvent | Date) => {
+    if (dateOrEvent instanceof Date) {
+      setInitialTaskDate(dateOrEvent);
+    } else {
+      setInitialTaskDate(null);
+    }
+    setShowNewTask(true);
+  };
+
   return (
     <div className="h-screen flex bg-gray-50 text-right" dir="rtl">
       {renderSidebar()}
@@ -760,8 +772,10 @@ function App() {
           <CalendarView 
             tasks={tasks}
             activeCategory={activeCategory}
+            categories={categories}
             onTaskClick={handleTaskClick}
-            onNewTask={() => setShowNewTask(true)}
+            onNewTask={handleNewTask}
+            onTaskUpdate={handleTaskUpdate}
           />
         )}
         {currentView === 'analytics' && (
@@ -822,30 +836,24 @@ function App() {
           onClose={() => {
             setShowNewTask(false);
             setSelectedTaskId(null);
+            setInitialTaskDate(null);
           }}
           initialTask={selectedTaskId ? tasks.find(t => t.id === selectedTaskId) : undefined}
+          initialDate={initialTaskDate} // העברת התאריך ההתחלתי
           onSubmit={(updatedTask) => {
             if (selectedTaskId) {
-              // עריכת משימה קיימת
+              // עדכון משימה קיימת
               handleTaskUpdate({ ...updatedTask, id: selectedTaskId });
-              setNotification({
-                message: 'השינויים נשמרו בהצלחה',
-                type: 'success'
-              });
             } else {
               // יצירת משימה חדשה
               setTasks(prev => [...prev, { 
                 ...updatedTask, 
                 id: Math.max(...prev.map(t => t.id ?? 0)) + 1 
               }]);
-              setNotification({
-                message: 'המשימה נוצרה בהצלחה',
-                type: 'success'
-              });
             }
             setShowNewTask(false);
             setSelectedTaskId(null);
-            setTimeout(() => setNotification(null), 3000);
+            setInitialTaskDate(null);
           }}
           categories={categories}
         />

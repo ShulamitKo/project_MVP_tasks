@@ -3,8 +3,8 @@ export type ColorType = 'blue' | 'green' | 'yellow' | 'red' | 'purple' | 'pink' 
 export interface Category {
   id: string;
   name: string;
-  count: number;
   color: ColorType;
+  count: number;
 }
 
 export interface NewCategory {
