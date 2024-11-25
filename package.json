@@ -12,14 +12,18 @@
   "dependencies": {
     "@radix-ui/react-slot": "^1.1.0",
     "@shadcn/ui": "^0.0.4",
+    "@types/xlsx": "^0.0.36",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
+    "framer-motion": "^11.11.17",
+    "html2canvas": "^1.4.1",
     "lucide-react": "^0.344.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "recharts": "^2.12.2",
     "tailwind-merge": "^2.5.4",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss-animate": "^1.0.7",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.1",
