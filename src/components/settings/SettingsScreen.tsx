@@ -1,11 +1,11 @@
 import React from 'react';
-import ProfileSection from './settings/ProfileSection';
-import NotificationsSection from './settings/NotificationsSection';
-import AppearanceSection from './settings/AppearanceSection';
-import AccessibilitySection from './settings/AccessibilitySection';
-import CategoriesSection from './settings/CategoriesSection';
-import AboutSection from './settings/AboutSection';
-import { Category, NewCategory } from '../types/category';
+import { Category, NewCategory } from '../../types/category';
+import ProfileSection from './ProfileSection';
+import NotificationsSection from './NotificationsSection';
+import AppearanceSection from './AppearanceSection';
+import AccessibilitySection from './AccessibilitySection';
+import CategoriesSection from './CategoriesSection';
+import AboutSection from './AboutSection';
 
 interface SettingsScreenProps {
   categories: Category[];
@@ -22,12 +22,10 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({
 }) => {
   return (
     <div className="h-screen flex flex-col bg-gray-50">
-      {/* כותרת קבועה */}
-      <header className="bg-white border-b px-6 py-4 shadow-sm">
-        <h1 className="text-2xl font-bold text-gray-800">הגדרות</h1>
-      </header>
+      <div className="bg-white border-b px-6 py-4 shadow-sm">
+        <h1 className="text-2xl font-bold">הגדרות</h1>
+      </div>
 
-      {/* תוכן עם סקרול */}
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-2xl mx-auto p-6 space-y-6">
           <ProfileSection />
@@ -42,8 +40,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({
           />
           <AboutSection />
 
-          {/* כפתור התנתקות */}
-          <button className="w-full p-4 bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200 transition-colors mb-6">
+          <button className="w-full p-4 bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200 transition-colors mb-6 settings-option">
             התנתקות
           </button>
         </div>
@@ -52,4 +49,4 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({
   );
 };
 
-export default SettingsScreen;
+export default SettingsScreen; 

@@ -1,6 +1,7 @@
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
+  darkMode: 'class',
   theme: {
     extend: {
       keyframes: {
@@ -18,6 +19,17 @@ export default {
       animation: {
         'modal-slide-in': 'modal-slide-in 0.2s ease-out',
       },
+      colors: {
+        dark: {
+          bg: '#1a1a1a',
+          surface: '#2d2d2d',
+          border: '#404040',
+          text: {
+            primary: '#ffffff',
+            secondary: '#a3a3a3'
+          }
+        }
+      }
     },
   },
   plugins: [],

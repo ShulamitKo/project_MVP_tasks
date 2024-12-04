@@ -22,7 +22,7 @@ const TaskActionsMenu: React.FC<TaskActionsMenuProps> = ({
   onEdit,
   onDelete,
   onDuplicate,
-  setNotification
+  
 }) => {
   const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
 
@@ -45,7 +45,7 @@ const TaskActionsMenu: React.FC<TaskActionsMenuProps> = ({
   if (showDeleteConfirm) {
     return (
       <div 
-        className="task-actions-menu bg-white rounded-lg shadow-lg border border-gray-100 z-[9999] w-64"
+        className="actions-menu absolute left-0 mt-1 w-64 rounded-lg shadow-lg overflow-hidden z-50"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="p-4 border-b border-gray-100">
@@ -64,13 +64,13 @@ const TaskActionsMenu: React.FC<TaskActionsMenuProps> = ({
               onDelete(task.id!);
               onClose();
             })}
-            className="flex-1 px-3 py-1.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm"
+            className="action-item danger flex-1 px-3 py-1.5 text-sm"
           >
             כן, מחק
           </button>
           <button 
             onClick={(e) => handleClick(e, () => setShowDeleteConfirm(false))}
-            className="flex-1 px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm"
+            className="action-item flex-1 px-3 py-1.5 text-sm"
           >
             ביטול
           </button>
@@ -80,48 +80,45 @@ const TaskActionsMenu: React.FC<TaskActionsMenuProps> = ({
   }
 
   return (
-    <div 
-      className="task-actions-menu bg-white rounded-lg shadow-lg border border-gray-100 z-[9999] w-48"
-      onClick={(e) => e.stopPropagation()}
-    >
-      <button 
-        onClick={(e) => handleClick(e, () => {
-          onEdit();
-          onClose();
-        })}
-        className="w-full px-4 py-2 text-right flex items-center gap-2 hover:bg-gray-50"
-      >
-        <Edit className="w-4 h-4 text-gray-500" />
-        <span>עריכה</span>
-      </button>
-
-      <button 
-        onClick={(e) => handleClick(e, () => {
-          onDuplicate(task);
-          onClose();
-          setNotification({
-            message: 'המשימה שוכפלה בהצלחה',
-            type: 'success'
-          });
-          setTimeout(() => {
-            setNotification(null);
-          }, 3000);
-        })}
-        className="w-full px-4 py-2 text-right flex items-center gap-2 hover:bg-gray-50"
-      >
-        <Copy className="w-4 h-4 text-gray-500" />
-        <span>שכפול משימה</span>
-      </button>
-
-      <div className="border-t border-gray-100 my-1"></div>
-      
-      <button 
-        onClick={(e) => handleClick(e, () => setShowDeleteConfirm(true))}
-        className="w-full px-4 py-2 text-right flex items-center gap-2 hover:bg-red-50 text-red-600"
-      >
-        <Trash2 className="w-4 h-4" />
-        <span>מחיקת משימה</span>
-      </button>
+    <div className="actions-menu absolute left-0 mt-1 w-48 rounded-lg shadow-lg overflow-hidden z-50">
+      <div className="py-1">
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onEdit();
+          }}
+          className="action-item w-full text-right px-4 py-2"
+        >
+          <span className="flex items-center gap-2">
+            <Edit className="w-4 h-4" />
+            עריכה
+          </span>
+        </button>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onDuplicate(task);
+          }}
+          className="action-item w-full text-right px-4 py-2"
+        >
+          <span className="flex items-center gap-2">
+            <Copy className="w-4 h-4" />
+            שכפול
+          </span>
+        </button>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowDeleteConfirm(true);
+          }}
+          className="action-item danger w-full text-right px-4 py-2"
+        >
+          <span className="flex items-center gap-2">
+            <Trash2 className="w-4 h-4" />
+            מחיקה
+          </span>
+        </button>
+      </div>
     </div>
   );
 }

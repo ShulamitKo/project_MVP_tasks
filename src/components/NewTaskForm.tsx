@@ -6,9 +6,11 @@ import {
   MapPin, 
   Bell,
   Repeat,
-  ChevronDown
+  ChevronDown,
+  Check
 } from 'lucide-react';
 import { Task, TaskPriority, TaskCategory, TaskRepeat } from '../types/task';
+
 
 interface Category {
   id: string;
@@ -142,7 +144,7 @@ const NewTaskForm: React.FC<NewTaskFormProps> = ({ onClose, onSubmit, initialTas
             <div className="flex items-center gap-3">
               <button 
                 onClick={onClose}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors dark:hover:bg-gray-700/50"
                 aria-label="סגור טופס"
               >
                 <ChevronRight className="w-6 h-6 text-gray-500" />
@@ -166,7 +168,7 @@ const NewTaskForm: React.FC<NewTaskFormProps> = ({ onClose, onSubmit, initialTas
             {/* כותרת ותיאור */}
             <div className="space-y-4">
               <div>
-                <label className="block font-medium mb-1 text-gray-700">
+                <label className="block font-medium mb-1 text-gray-700 dark:text-gray-200">
                   כותרת המשימה
                   <span className="text-red-500 mr-1">*</span>
                 </label>
@@ -189,7 +191,7 @@ const NewTaskForm: React.FC<NewTaskFormProps> = ({ onClose, onSubmit, initialTas
               </div>
 
               <div>
-                <label className="block font-medium mb-1 text-gray-700">תיאור</label>
+                <label className="block font-medium mb-1 text-gray-700 dark:text-gray-200">תיאור</label>
                 <textarea
                   value={task.description}
                   onChange={(e) => setTask({...task, description: e.target.value})}
@@ -203,26 +205,26 @@ const NewTaskForm: React.FC<NewTaskFormProps> = ({ onClose, onSubmit, initialTas
             {/* תאריך ושעה */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block font-medium mb-1 text-gray-700">תאריך</label>
+                <label className="block font-medium mb-1 text-gray-700 dark:text-gray-200">תאריך</label>
                 <div className="relative">
-                  <Calendar className="w-5 h-5 text-gray-400 absolute right-3 top-2.5" />
+                  <Calendar className="w-5 h-5 text-gray-400 absolute right-3 top-2.5 dark:text-gray-300" />
                   <input
                     type="date"
                     value={task.dueDate}
                     onChange={(e) => setTask({...task, dueDate: e.target.value})}
-                    className="w-full pl-4 pr-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full pl-4 pr-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white dark:hover:bg-gray-700"
                   />
                 </div>
               </div>
               <div>
-                <label className="block font-medium mb-1 text-gray-700">שעה</label>
+                <label className="block font-medium mb-1 text-gray-700 dark:text-gray-200">שעה</label>
                 <div className="relative">
-                  <Clock className="w-5 h-5 text-gray-400 absolute right-3 top-2.5" />
+                  <Clock className="w-5 h-5 text-gray-400 absolute right-3 top-2.5 dark:text-gray-300" />
                   <input
                     type="time"
                     value={task.dueTime}
                     onChange={(e) => setTask({...task, dueTime: e.target.value})}
-                    className="w-full pl-4 pr-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full pl-4 pr-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white dark:hover:bg-gray-700"
                   />
                 </div>
               </div>
@@ -231,7 +233,7 @@ const NewTaskForm: React.FC<NewTaskFormProps> = ({ onClose, onSubmit, initialTas
             {/* קטגוריה ועדיפות */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block font-medium mb-1 text-gray-700">
+                <label className="block font-medium mb-1 text-gray-700 dark:text-gray-200">
                   קטגוריה
                   <span className="text-red-500 mr-1">*</span>
                 </label>
@@ -243,7 +245,7 @@ const NewTaskForm: React.FC<NewTaskFormProps> = ({ onClose, onSubmit, initialTas
                       setErrors(prev => ({ ...prev, category: undefined }));
                     }
                   }}
-                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500
+                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white dark:hover:bg-gray-700
                     ${errors.category ? 'border-red-500' : 'border-gray-300'}`}
                 >
                   <option value="">בחר קטגוריה</option>
@@ -262,7 +264,7 @@ const NewTaskForm: React.FC<NewTaskFormProps> = ({ onClose, onSubmit, initialTas
               </div>
 
               <div>
-                <label className="block font-medium mb-1 text-gray-700">
+                <label className="block font-medium mb-1 text-gray-700 dark:text-gray-200">
                   עדיפות
                   <span className="text-red-500 mr-1">*</span>
                 </label>
@@ -270,34 +272,49 @@ const NewTaskForm: React.FC<NewTaskFormProps> = ({ onClose, onSubmit, initialTas
                   <button
                     type="button"
                     onClick={() => setTask({...task, priority: 'high'})}
-                    className={`py-2 rounded-lg flex items-center justify-center ${
+                    className={`py-2 rounded-lg flex items-center justify-center gap-2 ${
                       task.priority === 'high'
-                        ? 'bg-red-100 text-red-700 border-2 border-red-700'
+                        ? 'bg-red-100 text-red-700 border-2 border-red-700 relative'
                         : 'bg-red-50 text-red-600 hover:bg-red-100'
                     }`}
                   >
+                    {task.priority === 'high' && (
+                      <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-700 rounded-full flex items-center justify-center">
+                        <Check className="w-3 h-3 text-white" />
+                      </div>
+                    )}
                     גבוהה
                   </button>
                   <button
                     type="button"
                     onClick={() => setTask({...task, priority: 'medium'})}
-                    className={`py-2 rounded-lg flex items-center justify-center ${
+                    className={`py-2 rounded-lg flex items-center justify-center gap-2 ${
                       task.priority === 'medium'
-                        ? 'bg-yellow-100 text-yellow-700 border-2 border-yellow-700'
+                        ? 'bg-yellow-100 text-yellow-700 border-2 border-yellow-700 relative'
                         : 'bg-yellow-50 text-yellow-600 hover:bg-yellow-100'
                     }`}
                   >
+                    {task.priority === 'medium' && (
+                      <div className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-700 rounded-full flex items-center justify-center">
+                        <Check className="w-3 h-3 text-white" />
+                      </div>
+                    )}
                     בינונית
                   </button>
                   <button
                     type="button"
                     onClick={() => setTask({...task, priority: 'low'})}
-                    className={`py-2 rounded-lg flex items-center justify-center ${
+                    className={`py-2 rounded-lg flex items-center justify-center gap-2 ${
                       task.priority === 'low'
-                        ? 'bg-green-100 text-green-700 border-2 border-green-700'
+                        ? 'bg-green-100 text-green-700 border-2 border-green-700 relative'
                         : 'bg-green-50 text-green-600 hover:bg-green-100'
                     }`}
                   >
+                    {task.priority === 'low' && (
+                      <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-700 rounded-full flex items-center justify-center">
+                        <Check className="w-3 h-3 text-white" />
+                      </div>
+                    )}
                     נמוכה
                   </button>
                 </div>
@@ -309,15 +326,15 @@ const NewTaskForm: React.FC<NewTaskFormProps> = ({ onClose, onSubmit, initialTas
 
             {/* מיקום */}
             <div>
-              <label className="block font-medium mb-1 text-gray-700">מיקום</label>
+              <label className="block font-medium mb-1 text-gray-700 dark:text-gray-200">מיקום</label>
               <div className="relative">
-                <MapPin className="w-5 h-5 text-gray-400 absolute right-3 top-2.5" />
+                <MapPin className="w-5 h-5 text-gray-400 absolute right-3 top-2.5 dark:text-gray-300" />
                 <input
                   type="text"
                   value={task.location}
                   onChange={(e) => setTask({...task, location: e.target.value})}
                   placeholder="הכנס מיקום (אוציונלי)"
-                  className="w-full pl-4 pr-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full pl-4 pr-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white dark:hover:bg-gray-700 dark:placeholder-gray-400"
                 />
               </div>
             </div>
@@ -326,7 +343,7 @@ const NewTaskForm: React.FC<NewTaskFormProps> = ({ onClose, onSubmit, initialTas
             <button
               type="button"
               onClick={() => setShowAdvanced(!showAdvanced)}
-              className="w-full px-4 py-2 text-gray-600 bg-gray-50 rounded-lg hover:bg-gray-100 flex items-center justify-center gap-2"
+              className="w-full px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 flex items-center justify-center gap-2 transition-colors dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
             >
               <span>{showAdvanced ? 'הסתר' : 'הצג'} הגדרות נוספות</span>
               <ChevronDown className={`w-5 h-5 transition-transform ${showAdvanced ? 'rotate-180' : ''}`} />
@@ -334,16 +351,16 @@ const NewTaskForm: React.FC<NewTaskFormProps> = ({ onClose, onSubmit, initialTas
 
             {/* הגדרות נוספות */}
             {showAdvanced && (
-              <div className="space-y-4 bg-gray-50 p-4 rounded-lg">
+              <div className="space-y-4 bg-gray-100 p-4 rounded-lg dark:bg-gray-800">
                 {/* תזכורת */}
                 <div>
-                  <label className="block font-medium mb-1 text-gray-700">תזכורת</label>
+                  <label className="block font-medium mb-1 text-gray-700 dark:text-gray-200">תזכורת</label>
                   <div className="relative">
-                    <Bell className="w-5 h-5 text-gray-400 absolute right-3 top-2.5" />
+                    <Bell className="w-5 h-5 text-gray-400 absolute right-3 top-2.5 dark:text-gray-300" />
                     <select
                       value={task.reminder}
                       onChange={(e) => setTask({...task, reminder: e.target.value})}
-                      className="w-full pl-4 pr-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full pl-4 pr-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white dark:hover:bg-gray-700"
                     >
                       <option value="none">ללא תזכורת</option>
                       <option value="0">בזמן המשימה</option>
@@ -357,13 +374,13 @@ const NewTaskForm: React.FC<NewTaskFormProps> = ({ onClose, onSubmit, initialTas
 
                 {/* חזרה */}
                 <div>
-                  <label className="block font-medium mb-1 text-gray-700">חזרה</label>
+                  <label className="block font-medium mb-1 text-gray-700 dark:text-gray-200">חזרה</label>
                   <div className="relative">
-                    <Repeat className="w-5 h-5 text-gray-400 absolute right-3 top-2.5" />
+                    <Repeat className="w-5 h-5 text-gray-400 absolute right-3 top-2.5 dark:text-gray-300" />
                     <select
                       value={task.repeat}
                       onChange={handleRepeatChange}
-                      className="w-full pl-4 pr-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full pl-4 pr-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white dark:hover:bg-gray-700"
                     >
                       <option value="none">ללא חזרה</option>
                       <option value="daily">כל יום</option>

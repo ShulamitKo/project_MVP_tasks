@@ -6,32 +6,50 @@
   :root {
     font-family: 'Assistant', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
   }
-
-  body {
-    @apply antialiased;
-  }
 }
 
-@layer components {
-  .btn {
-    @apply px-4 py-2 rounded-lg transition-colors;
-  }
+/* Components */
+.btn {
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  transition: all 0.2s;
+}
 
-  .btn-primary {
-    @apply bg-blue-500 text-white hover:bg-blue-600;
-  }
+.btn-primary {
+  background-color: #3b82f6;
+  color: white;
+}
 
-  .btn-secondary {
-    @apply bg-gray-100 text-gray-600 hover:bg-gray-200;
-  }
+.btn-primary:hover {
+  background-color: #2563eb;
+}
 
-  .input {
-    @apply w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500;
-  }
+.btn-secondary {
+  background-color: #f3f4f6;
+  color: #4b5563;
+}
 
-  .card {
-    @apply bg-white rounded-xl shadow-sm;
-  }
+.btn-secondary:hover {
+  background-color: #e5e7eb;
+}
+
+.input {
+  width: 100%;
+  padding: 0.5rem 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.card {
+  background-color: white;
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 }
 
 /* Custom Scrollbar */
@@ -41,9 +59,1805 @@
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-gray-100;
+  background-color: rgb(243 244 246); /* זה שווה ל-bg-gray-100 */
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-gray-300 rounded-full hover:bg-gray-400;
+  background-color: rgb(209 213 219); /* זה שווה ל-bg-gray-300 */
+  border-radius: 9999px; /* rounded-full */
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgb(156 163 175); /* זה שווה ל-bg-gray-400 */
+}
+
+/* Font Sizes */
+.text-small {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+.text-medium {
+  font-size: 1rem;
+  line-height: 1.5rem;
+}
+
+.text-large {
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+}
+
+/* High Contrast Mode - תאימות לתקני נגישות */
+.high-contrast {
+  /* צקסט */
+  .text-gray-400,
+  .text-gray-500,
+  .text-gray-600 {
+    color: #000000 !important;
+  }
+
+  /* רקעים */
+  .bg-gray-50,
+  .bg-gray-100,
+  .bg-gray-200 {
+    background-color: #ffffff !important;
+  }
+
+  /* צבעים נגישים */
+  .text-blue-500,
+  .text-blue-600 {
+    color: #0000ee !important; /* כחול נגיש */
+  }
+
+  .text-red-500,
+  .text-red-600 {
+    color: #cc0000 !important; /* אדום נגיש */
+  }
+
+  .text-green-500,
+  .text-green-600 {
+    color: #006600 !important; /* ירוק נגיש */
+  }
+
+  .text-yellow-500,
+  .text-yellow-600 {
+    color: #cc6600 !important; /* כתום נגיש */
+  }
+}
+
+/* Dark Mode Styles */
+:root {
+  /* Light Theme */
+  --bg-light: #ffffff;
+  --surface-light: #f3f4f6;
+  --text-light: #1f2937;
+  --text-secondary-light: #6b7280;
+  --border-light: #e5e7eb;
+  --hover-light: #f9fafb;
+
+  /* Dark Theme - צבעים מעודכנים עם ניגודיות חזקה יותר */
+  --bg-dark: #0a0f1a;          /* רקע כהה יותר */
+  --surface-dark: #1a2234;     /* משטח כהה */
+  --text-dark: #ffffff;        /* טקסט לבן מלא */
+  --text-secondary-dark: #e2e8f0; /* טקסט משני בהיר */
+  --border-dark: #3b4658;      /* גבולות בולטים */
+  --hover-dark: #2a3446;       /* הובר כהה */
+  
+  /* צבעי הדגשה למצב כהה */
+  --primary-dark: #3b82f6;     /* כחול נגיש */
+  --primary-hover-dark: #2563eb; /* כחול כהה להובר */
+  --success-dark: #22c55e;     /* ירוק נגיש */
+  --error-dark: #ef4444;       /* אדום נגיש */
+  --warning-dark: #f59e0b;     /* כתום נגיש */
+}
+
+/* Light Mode (default) */
+.bg-primary { background-color: var(--bg-light); }
+.bg-surface { background-color: var(--surface-light); }
+.text-primary { color: var(--text-light); }
+.text-secondary { color: var(--text-secondary-light); }
+.border-color { border-color: var(--border-light); }
+
+/* Dark Mode */
+.dark {
+  /* רקעים */
+  .bg-white { background-color: var(--surface-dark); }
+  .bg-gray-50 { background-color: var(--bg-dark); }
+  .bg-gray-100 { background-color: var(--surface-dark); }
+  
+  /* טקסט */
+  .text-gray-500 { color: var(--text-secondary-dark); }
+  .text-gray-600 { color: var(--text-secondary-dark); }
+  .text-gray-700,
+  .text-gray-800,
+  .text-gray-900 { 
+    color: var(--text-dark); 
+  }
+  
+  /* גבולות */
+  .border,
+  .border-gray-100,
+  .border-gray-200 { 
+    border-color: var(--border-dark); 
+  }
+  
+  /* כפתורים */
+  .btn-primary {
+    background-color: var(--primary-dark);
+    color: var(--text-dark);
+    border: 1px solid transparent;
+  }
+  
+  .btn-primary:hover {
+    background-color: var(--primary-hover-dark);
+    transform: translateY(-1px);
+  }
+  
+  .btn-primary:active {
+    transform: translateY(0);
+  }
+
+  .btn-secondary {
+    background-color: transparent;
+    color: var(--text-dark);
+    border: 1px solid var(--border-dark);
+  }
+  
+  .btn-secondary:hover {
+    background-color: var(--hover-dark);
+    border-color: var(--text-secondary-dark);
+  }
+  
+  /* קלט */
+  .input {
+    background-color: var(--bg-dark);
+    border-color: var(--border-dark);
+    color: var(--text-dark);
+  }
+  
+  .input:hover {
+    border-color: var(--text-secondary-dark);
+  }
+  
+  .input:focus {
+    background-color: var(--surface-dark);
+    border-color: var(--primary-dark);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+  }
+  
+  .input::placeholder {
+    color: var(--text-secondary-dark);
+    opacity: 0.7;
+  }
+  
+  /* כרטיסים */
+  .card {
+    background-color: var(--surface-dark);
+    border: 1px solid var(--border-dark);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+  }
+  
+  .card:hover {
+    background-color: var(--hover-dark);
+    border-color: var(--text-secondary-dark);
+    transform: translateY(-2px);
+  }
+  
+  /* סקרולבר */
+  ::-webkit-scrollbar-track {
+    background-color: var(--bg-dark);
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background-color: var(--border-dark);
+    border: 2px solid var(--bg-dark);
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: var(--text-secondary-dark);
+  }
+
+  /* צללים */
+  .shadow-sm {
+    box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.4);
+  }
+
+  .shadow {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+  }
+
+  .shadow-lg {
+    box-shadow: 0 8px 12px -2px rgba(0, 0, 0, 0.6);
+  }
+
+  /* הדגשות וממשק */
+  .ring-1 {
+    --tw-ring-color: rgba(255, 255, 255, 0.2);
+  }
+
+  .divide-gray-200 > * + * {
+    border-color: var(--border-dark);
+  }
+
+  /* אייקונים */
+  svg {
+    color: var(--text-secondary-dark);
+  }
+
+  /* טבלאות */
+  table {
+    border-color: var(--border-dark);
+  }
+
+  th {
+    background-color: var(--surface-dark);
+    color: var(--text-dark);
+  }
+
+  td {
+    border-color: var(--border-dark);
+  }
+
+  tr:hover {
+    background-color: var(--hover-dark);
+  }
+
+  /* תפריטים */
+  .dropdown-content {
+    background-color: var(--surface-dark);
+    border: 1px solid var(--border-dark);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+  }
+
+  .dropdown-item:hover {
+    background-color: var(--hover-dark);
+  }
+
+  /* כותרות */
+  h1, h2, h3, h4, h5, h6 {
+    color: var(--text-dark);
+  }
+
+  /* כרטיסי משימות */
+  .task-card {
+    background-color: var(--surface-dark);
+    border-color: var(--border-dark);
+  }
+
+  .task-card:hover {
+    background-color: var(--hover-dark);
+    border-color: var(--text-secondary-dark);
+  }
+
+  .task-title {
+    color: var(--text-dark);
+    font-weight: 600;
+  }
+
+  .task-date {
+    color: var(--text-secondary-dark);
+  }
+
+  /* תפריט פעולות - שיפור ניגודיות */
+  .actions-menu {
+    background-color: #020617; /* רקע כהה מאוד */
+    border: 2px solid #60a5fa;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.9);
+  }
+
+  .action-item {
+    background-color: #1e293b;
+    color: #ffffff;
+    font-weight: 600;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    margin: 0.25rem;
+    border: 1px solid #60a5fa;
+    letter-spacing: 0.025em;
+
+    &:hover {
+      background-color: #3b82f6;
+      color: #ffffff;
+      border-color: #93c5fd;
+      transform: translateY(-1px);
+    }
+
+    &.danger {
+      background-color: #fee2e2; /* רקע אדום בהיר */
+      color: #dc2626; /* טקסט אדום */
+    }
+
+    &.danger:hover {
+      background-color: #dc2626; /* רקע אדום כהה בהובר */
+      color: #ffffff; /* טקסט לבן בהובר */
+    }
+  }
+
+  /* יומן - שיפור ניגודיות */
+  .calendar-header {
+    color: #ffffff;
+    font-weight: 700;
+    background-color: var(--surface-dark);
+  }
+
+  .calendar-day {
+    background-color: #1e293b;
+    border: 1px solid #334155;
+    color: #ffffff;
+    font-weight: 500;
+  }
+
+  .calendar-day:hover {
+    background-color: #3b82f6;
+    color: #ffffff;
+    font-weight: 600;
+    border-color: #60a5fa;
+  }
+
+  .calendar-day.other-month {
+    color: #64748b;
+    background-color: #0f172a;
+  }
+
+  .calendar-day.today {
+    background-color: #1d4ed8;
+    color: #ffffff;
+    font-weight: 700;
+    border: 2px solid #60a5fa;
+  }
+
+  .calendar-day.selected {
+    border-color: var(--primary-hover-dark);
+    border-width: 2px;
+  }
+
+  .calendar-event {
+    background-color: var(--primary-dark);
+    color: white;
+    font-weight: 500;
+  }
+
+  /* כפתורים - שיפור ניגודיות בהובר */
+  .btn-primary:hover {
+    background-color: var(--primary-hover-dark);
+    color: white;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.4);
+  }
+
+  .btn-secondary:hover {
+    background-color: var(--hover-dark);
+    color: var(--primary-hover-dark);
+    border-color: var(--primary-hover-dark);
+  }
+
+  /* דף הגדרות - שיפור ניגודיות */
+  .settings-section {
+    background-color: #0f172a;
+    border: 2px solid #60a5fa;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+
+    /* כותרות ראשיות */
+    h2, h3, h4, 
+    .text-gray-500,
+    .text-gray-600,
+    .text-gray-700 {
+      color: #ffffff !important;  /* לבן מלא */
+      font-weight: 700;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    }
+
+    /* תיאורי הגדרות */
+    .settings-description,
+    .text-sm {
+      color: #f1f5f9 !important;  /* אפור בהיר מאוד */
+      font-weight: 600;
+      letter-spacing: 0.025em;
+    }
+
+    /* תוויות */
+    label,
+    .text-gray-600 {
+      color: #ffffff !important;  /* לבן מלא */
+      font-weight: 600;
+    }
+
+    /* טקסט בכפתורים */
+    button {
+      color: #ffffff;
+      font-weight: 600;
+
+      /* טקסט משני בכפתורים */
+      .text-gray-500,
+      .text-gray-600 {
+        color: #f1f5f9 !important;
+      }
+
+      &:hover {
+        .text-gray-500,
+        .text-gray-600 {
+          color: #ffffff !important;
+        }
+      }
+    }
+  }
+
+  /* כותרות ראשיות */
+  .settings-title {
+    color: #ffffff;  /* לבן מלא */
+    font-weight: 800;  /* משקל חזק יותר */
+    font-size: 1.25rem;
+    letter-spacing: 0.025em;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  }
+
+  /* תיאורים */
+  .settings-description {
+    color: #e2e8f0;  /* אפור בהיר */
+    font-weight: 600;
+    letter-spacing: 0.025em;
+  }
+
+  /* אפשרויות */
+  .settings-option {
+    background-color: #1e293b;
+    color: #ffffff;  /* לבן מלא */
+    font-weight: 600;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    border: 2px solid #60a5fa;
+    margin-bottom: 0.5rem;
+    letter-spacing: 0.025em;
+
+    /* טקסט משני */
+    .text-gray-500,
+    .text-gray-600 {
+      color: #e2e8f0 !important;  /* אפור בהיר */
+    }
+
+    /* הובר */
+    &:hover {
+      background-color: #2563eb;
+      border-color: #93c5fd;
+      color: #ffffff;
+      transform: translateY(-1px);
+
+      .text-gray-500,
+      .text-gray-600 {
+        color: #ffffff !important;  /* לבן בהובר */
+      }
+    }
+  }
+
+  /* כפתור התנתקות */
+  .settings-logout {
+    background-color: #1e293b;
+    color: #f87171;  /* אדום בהיר */
+    font-weight: 600;
+    
+    &:hover {
+      background-color: #7f1d1d;  /* אדום כהה */
+      color: #ffffff;
+    }
+  }
+
+  /* תפריטים נפתחים - שיפור ניגודיות */
+  .dropdown-menu {
+    background-color: #0f172a;
+    border: 1px solid #334155;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+    padding: 0.5rem;
+  }
+
+  .dropdown-item {
+    color: #ffffff;
+    font-weight: 500;
+
+    &:hover {
+      background-color: var(--primary-dark);
+      color: #ffffff;
+    }
+
+    &.active {
+      background-color: var(--primary-dark);
+      color: white;
+    }
+  }
+
+  /* תגיות וסטטוסים */
+  .tag {
+    background-color: var(--hover-dark);
+    color: var(--text-dark);
+  }
+
+  .status-badge {
+    &.completed {
+      background-color: var(--success-dark);
+      color: var(--text-dark);
+    }
+
+    &.pending {
+      background-color: var(--warning-dark);
+      color: var(--text-dark);
+    }
+  }
+
+  /* טפסים */
+  label {
+    color: var(--text-dark);
+  }
+
+  .form-hint {
+    color: var(--text-secondary-dark);
+  }
+
+  /* הודעות מערכת */
+  .toast {
+    background-color: var(--surface-dark);
+    border-color: var(--border-dark);
+    color: var(--text-dark);
+  }
+
+  .toast.success {
+    border-color: var(--success-dark);
+  }
+
+  .toast.error {
+    border-color: var(--error-dark);
+  }
+
+  /* שיפור ניגודיות בטקסטים */
+  .task-title {
+    color: #f8fafc;
+    font-weight: 600;
+    font-size: 1.1rem;
+  }
+
+  .task-date,
+  .task-location,
+  .task-category {
+    color: #e2e8f0;
+    font-weight: 500;
+  }
+
+  .task-description {
+    color: #f1f5f9;
+  }
+
+  /* שיפור ניגודיות בכפתורים */
+  .btn {
+    font-weight: 600;
+    letter-spacing: 0.025em;
+  }
+
+  .btn-primary {
+    background-color: #2563eb;
+    color: #ffffff;
+  }
+
+  .btn-primary:hover {
+    background-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
+  }
+
+  .btn-secondary {
+    background-color: #334155;
+    color: #f8fafc;
+    border: 2px solid #475569;
+  }
+
+  .btn-secondary:hover {
+    background-color: #475569;
+    border-color: #64748b;
+    color: #ffffff;
+  }
+
+  /* תפריט צידי - שיפור ניגודיות */
+  .sidebar-item {
+    color: #cbd5e1;
+    font-weight: 500;
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+  }
+
+  .sidebar-item:hover {
+    background-color: #3b82f6;
+    color: #ffffff;
+    font-weight: 600;
+  }
+
+  .sidebar-item.active {
+    background-color: #1d4ed8;
+    color: #ffffff;
+    font-weight: 600;
+  }
+
+  /* תפריט פעולות נפתח - שיפור ניגודיות */
+  .actions-menu {
+    background-color: #0f172a; /* רקע כהה מאוד */
+  }
+
+  .action-item {
+    color: #ffffff;
+    font-weight: 500;
+    padding: 0.75rem 1rem;
+    border-radius: 0.375rem;
+    margin: 0.25rem;
+  }
+
+  .action-item:hover {
+    background-color: #3b82f6;
+    color: #ffffff;
+    font-weight: 600;
+  }
+
+  .action-item.danger {
+    color: #ffffff;
+    font-weight: 500;
+  }
+
+  .action-item.danger:hover {
+    background-color: #dc2626;
+    color: #ffffff;
+    font-weight: 600;
+  }
+
+  /* תפריט צידי - שיפור ניגודיות */
+  .sidebar-item {
+    color: #cbd5e1;
+    font-weight: 500;
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+  }
+
+  .sidebar-item:hover {
+    background-color: #3b82f6;
+    color: #ffffff;
+    font-weight: 600;
+  }
+
+  .sidebar-item.active {
+    background-color: #1d4ed8;
+    color: #ffffff;
+    font-weight: 600;
+  }
+
+  /* יומן - שיפור ניגודיות */
+  .calendar-day {
+    color: #ffffff;
+    font-weight: 500;
+    background-color: #1e293b;
+    border: 1px solid #334155;
+  }
+
+  .calendar-day:hover {
+    background-color: #3b82f6;
+    color: #ffffff;
+    font-weight: 600;
+    border-color: #60a5fa;
+  }
+
+  .calendar-day.other-month {
+    color: #64748b;
+    background-color: #0f172a;
+  }
+
+  .calendar-day.today {
+    background-color: #1d4ed8;
+    color: #ffffff;
+    font-weight: 700;
+    border: 2px solid #60a5fa;
+  }
+
+  /* דף הדרות - שיפור ניגודיות */
+  .settings-section {
+    background-color: #1e293b;
+    border: 1px solid #475569;
+    padding: 1.5rem;
+  }
+
+  .settings-title {
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+  }
+
+  .settings-description {
+    color: #e2e8f0;
+    font-weight: 500;
+  }
+
+  .settings-option {
+    background-color: #1e293b;
+    color: #ffffff;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    border: 2px solid #475569;
+    margin-bottom: 0.5rem;
+
+    &:hover {
+      background-color: #3b82f6;
+      color: #ffffff;
+      font-weight: 600;
+      border-color: #60a5fa;
+    }
+  }
+
+  /* תפריטים נפתחים - שיפור ניגודיות */
+  .dropdown-menu {
+    background-color: #0f172a;
+    border: 1px solid #334155;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+    padding: 0.5rem;
+  }
+
+  .dropdown-item {
+    color: #ffffff;
+    font-weight: 500;
+    padding: 0.75rem 1rem;
+    border-radius: 0.375rem;
+    margin: 0.25rem;
+
+    &:hover {
+      background-color: #3b82f6;
+      color: #ffffff;
+      font-weight: 600;
+    }
+  }
+
+  /* תפריט פעולות - שיגודיות משופרת */
+  .actions-menu {
+    background-color: #020617; /* רקע כהה יותר */
+    border: 2px solid #60a5fa;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.9);
+  }
+
+  .action-item {
+    background-color: #0f172a;
+    color: #ffffff;
+    font-weight: 600;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    margin: 0.25rem;
+    border: 1px solid #60a5fa;
+    letter-spacing: 0.025em;
+  }
+
+  .action-item:hover {
+    background-color: #3b82f6;
+    color: #ffffff;
+    border-color: #93c5fd;
+    transform: translateY(-1px);
+  }
+
+  .action-item.danger {
+    background-color: #7f1d1d;
+    color: #ffffff;
+    border-color: #f87171;
+  }
+
+  .action-item.danger:hover {
+    background-color: #ef4444;
+    color: #ffffff;
+    border-color: #fca5a5;
+  }
+
+  /* תפריט צידי - ניגדיות משופרת */
+  nav {
+    background-color: #0f172a;
+    border-color: #475569;
+  }
+
+  .nav-item {
+    color: #ffffff;
+    background-color: #1e293b;
+    border: 2px solid #475569;
+    font-weight: 600;
+    padding: 1rem;
+    border-radius: 0.75rem;
+    margin-bottom: 0.75rem;
+    transition: all 0.2s ease;
+  }
+
+  .nav-item:hover {
+    background-color: #1e293b;
+    color: #93c5fd;
+    border-color: #93c5fd;
+    transform: translateX(-4px);
+  }
+
+  .nav-item.active {
+    background-color: #2563eb;
+    color: #ffffff;
+    border-color: #93c5fd;
+    font-weight: 700;
+    box-shadow: 0 0 0 2px rgba(147, 197, 253, 0.3);
+  }
+
+  /* תפריט פעולות - מצב כהה */
+  .actions-menu {
+    background-color: #0f172a;
+    border: 1px solid #475569;
+  }
+
+  .action-item {
+    color: #ffffff;
+    background-color: #1e293b;
+    border: 1px solid #475569;
+    font-weight: 500;
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    margin: 0.25rem;
+    transition: all 0.2s ease;
+  }
+
+  .action-item:hover {
+    background-color: #1e293b;
+    color: #60a5fa;
+    border-color: #60a5fa;
+  }
+
+  .action-item.danger {
+    background-color: #7f1d1d;
+    color: #fecaca;
+    border-color: #dc2626;
+  }
+
+  .action-item.danger:hover {
+    background-color: #dc2626;
+    color: #ffffff;
+    border-color: #ef4444;
+  }
+}
+
+/* אנימציות חלקות למעבר בין מצבים */
+.bg-white,
+.bg-gray-50,
+.bg-gray-100,
+.text-gray-500,
+.text-gray-600,
+.text-gray-700,
+.text-gray-800,
+.text-gray-900,
+.border,
+.border-gray-100,
+.border-gray-200,
+.shadow-sm,
+.shadow,
+.shadow-lg,
+.btn,
+.input,
+.card,
+svg {
+  transition: all 0.2s ease;
+}
+
+/* כפתורי פעולות - מצב רגיל */
+.actions-menu {
+  background-color: white;
+}
+
+.action-item {
+  /* ... הקוד הקיים ... */
+
+  &.danger {
+    background-color: #fee2e2; /* רקע אדום בהיר */
+    color: #dc2626; /* טקסט אדום */
+  }
+
+  &.danger:hover {
+    background-color: #dc2626; /* רקע אדום כהה בהובר */
+    color: #ffffff; /* טקסט לבן בהובר */
+  }
+}
+
+/* Dark Mode */
+.dark {
+  .actions-menu {
+    background-color: #0f172a;
+  }
+
+  .action-item {
+    background-color: #1e293b;
+    color: #ffffff;
+
+    &:hover {
+      background-color: #3b82f6;
+      color: #ffffff;
+    }
+
+    &.danger {
+      background-color: #7f1d1d; /* רקע אדום הה */
+      color: #fecaca; /* טקסט אדום בהיר */
+    }
+
+    &.danger:hover {
+      background-color: #dc2626;
+      color: #ffffff;
+    }
+  }
+}
+
+/* Sidebar styles - מצב רגיל */
+.nav-item {
+  color: #4b5563;
+  transition: all 0.2s ease;
+}
+
+.nav-item:hover {
+  background-color: #f3f4f6;
+  color: #1d4ed8;
+}
+
+.nav-item.active {
+  background-color: #e0e7ff;
+  color: #1d4ed8;
+  font-weight: 600;
+}
+
+/* Dark mode */
+.dark {
+  /* ... הקוד הקיים ... */
+
+  /* Sidebar - שיפור ניגודיות במצב כהה */
+  nav {
+    background-color: #0f172a;
+    border-color: #475569;
+  }
+
+  .nav-item {
+    color: #ffffff;
+    background-color: #1e293b;
+    border: 2px solid #475569;
+    font-weight: 600;
+    padding: 1rem;
+    border-radius: 0.75rem;
+    margin-bottom: 0.75rem;
+    transition: all 0.2s ease;
+  }
+
+  .nav-item:hover {
+    background-color: #1e293b;
+    color: #93c5fd;
+    border-color: #93c5fd;
+    transform: translateX(-4px);
+  }
+
+  .nav-item.active {
+    background-color: #2563eb;
+    color: #ffffff;
+    border-color: #93c5fd;
+    font-weight: 700;
+    box-shadow: 0 0 0 2px rgba(147, 197, 253, 0.3);
+  }
+
+  /* Actions Menu - שיפור ניגודיות */
+  .actions-menu {
+    background-color: #0f172a;
+    border-color: #475569;
+  }
+
+  .action-item {
+    color: #ffffff;
+    background-color: #1e293b;
+    border: 1px solid #475569;
+    font-weight: 500;
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    margin: 0.25rem;
+    transition: all 0.2s ease;
+  }
+
+  .action-item:hover {
+    background-color: #1e293b;
+    color: #60a5fa;
+    border-color: #60a5fa;
+  }
+
+  .action-item.danger {
+    background-color: #7f1d1d;
+    color: #fecaca;
+    border-color: #dc2626;
+  }
+
+  .action-item.danger:hover {
+    background-color: #dc2626;
+    color: #ffffff;
+    border-color: #ef4444;
+  }
+}
+
+/* Dark Mode */
+.dark {
+  /* תפריט צידי - מצב כהה */
+  nav {
+    background-color: #0f172a;
+  }
+
+  /* כפתורי ניווט ראשיים */
+  nav button {
+    color: #ffffff;  /* טקסט לבן מלא */
+    
+    &:hover {
+      background-color: #1e293b;
+      color: #ffffff;
+    }
+
+    /* מצב נבחר - ניגודיות משופרת */
+    &.bg-blue-50 {
+      background-color: #2563eb;
+      color: #ffffff;
+
+      svg {
+        color: #ffffff;
+      }
+
+      /* מספר המשימות בקטגוריה נבחרת */
+      .text-gray-400,
+      .text-blue-600 {
+        color: #ffffff;
+      }
+    }
+
+    /* אייקונים */
+    svg {
+      color: currentColor;
+    }
+  }
+
+  /* כפתורי קטגוריות */
+  nav .space-y-1 button {
+    color: #ffffff;
+
+    /* מספר המשימות - מצב רגיל */
+    .text-gray-400 {
+      color: #e2e8f0;
+    }
+
+    /* מצב נבחר */
+    &.bg-gray-100 {
+      background-color: #2563eb;
+      color: #ffffff;
+      font-weight: 600;
+
+      .text-gray-400,
+      .text-blue-600 {
+        color: #ffffff;
+      }
+    }
+  }
+
+  /* כפתור קטגוריה חדשה */
+  nav button:last-child {
+    color: #ffffff;
+    
+    &:hover {
+      background-color: #1e293b;
+      color: #ffffff;
+    }
+  }
+
+  /* כותרת "תפריט" */
+  .text-gray-600 {
+    color: #ffffff;
+    font-weight: 600;
+  }
+}
+
+.dark {
+  /* תפריט צידי - מצב כהה */
+  nav {
+    background-color: #0f172a;
+  }
+
+  /* כפתורי ניווט ראשיים */
+  nav button {
+    color: #ffffff;  /* טקסט לבן מלא */
+    
+    &:hover {
+      background-color: #1e293b;
+      color: #ffffff;
+    }
+
+    /* מצב נבחר - ניגודיות משופרת */
+    &.bg-blue-50 {
+      background-color: #2563eb;
+      color: #ffffff;
+
+      svg {
+        color: #ffffff;
+      }
+
+      /* מספר המשימות בקטגוריה נבחרת */
+      .text-gray-400,
+      .text-blue-600 {
+        color: #ffffff;
+      }
+    }
+
+    /* אייקונים */
+    svg {
+      color: currentColor;
+    }
+  }
+
+  /* כפתורי קטגוריות */
+  nav .space-y-1 button {
+    color: #ffffff;
+
+    /* מספר המשימות - מצב רגיל */
+    .text-gray-400 {
+      color: #e2e8f0;
+    }
+
+    /* מצב נבחר */
+    &.bg-gray-100 {
+      background-color: #2563eb;
+      color: #ffffff;
+      font-weight: 600;
+
+      .text-gray-400,
+      .text-blue-600 {
+        color: #ffffff;
+      }
+    }
+  }
+
+  /* כפתור קטגוריה חדשה */
+  nav button:last-child {
+    color: #ffffff;
+    
+    &:hover {
+      background-color: #1e293b;
+      color: #ffffff;
+    }
+  }
+
+  /* כותרת "תפריט" */
+  .text-gray-600 {
+    color: #ffffff;
+    font-weight: 600;
+  }
+}
+
+.dark {
+  /* סטטיסטיקות - שיפור ניגודיות */
+  .bg-blue-50,
+  .bg-red-50,
+  .bg-green-50 {
+    background-color: #0f172a;  /* רקע כהה יותר */
+    border: 2px solid #60a5fa;  /* גבול כחול בהיר */
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+
+    /* אייקונים */
+    svg {
+      color: #60a5fa !important;  /* כחול בהיר */
+      stroke-width: 2.5;  /* עובי קו עבה יותר */
+      filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));  /* צל קל */
+      opacity: 1;
+    }
+
+    /* טקסט */
+    .text-gray-500,
+    .text-gray-600,
+    .text-gray-700 {
+      color: #93c5fd !important;  /* כחול בהיר יותר */
+      font-weight: 600;
+    }
+
+    /* מספרים */
+    .text-2xl,
+    .text-3xl,
+    .text-4xl {
+      color: #ffffff !important;
+      font-weight: 800;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    }
+  }
+}
+
+/* הגדרות התראות - שיפור ניגודיות */
+section.bg-white {
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+
+  h2 {
+    color: #1f2937;
+    font-weight: 700;
+
+    svg {
+      color: #6b7280;
+    }
+  }
+
+  .font-medium {
+    color: #374151;
+  }
+
+  .text-gray-500,
+  .text-sm {
+    color: #6b7280;
+  }
+}
+
+.dark {
+  section.bg-white {
+    background-color: #0f172a;
+    border: 1px solid #475569;
+
+    /* כותרת ראשית */
+    h2 {
+      color: #ffffff !important;
+      font-weight: 700;
+
+      svg {
+        color: #ffffff !important;
+      }
+    }
+
+    /* כותרות משניות */
+    .font-medium {
+      color: #ffffff !important;
+      font-weight: 600;
+    }
+
+    /* טקסט תיאור */
+    .text-gray-500,
+    .text-sm {
+      color: #e2e8f0 !important;
+      font-weight: 500;
+    }
+
+    /* כפתורי רדיו */
+    label {
+      color: #f1f5f9 !important;
+      
+      span {
+        color: #f1f5f9 !important;
+      }
+    }
+
+    /* כפתורי תזכורות */
+    button {
+      &.bg-gray-100 {
+        background-color: #1e293b;
+        color: #f1f5f9;
+
+        &:hover {
+          background-color: #2563eb;
+          color: #ffffff;
+        }
+      }
+
+      &.bg-blue-500 {
+        background-color: #2563eb;
+        color: #ffffff;
+      }
+    }
+
+    /* מתגים */
+    .bg-gray-200 {
+      background-color: #475569;
+    }
+
+    .bg-blue-500 {
+      background-color: #2563eb;
+    }
+  }
+}
+
+.dark {
+  /* אייקונים בדף הגרות - שיפור ניגודיות */
+  section.bg-white {
+    /* אייקונים בכותרות */
+    h2 svg,
+    .lucide-check-circle2,
+    .lucide-bell,
+    .lucide-clock,
+    .lucide-settings {
+      color: #60a5fa !important;  /* כחול בהיר */
+      stroke-width: 2.5;  /* עובי קו עבה יותר */
+      filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));  /* צל קל */
+      opacity: 1;
+    }
+
+    /* אייקונים בכפתורים */
+    button svg {
+      color: currentColor;
+      stroke-width: 2;
+    }
+
+    /* אייקונים במצב מסומן */
+    .bg-blue-500 svg,
+    button.active svg {
+      color: #ffffff !important;
+      stroke-width: 2.5;
+    }
+
+    /* אייקונים בהובר */
+    button:hover svg {
+      color: #ffffff !important;
+    }
+  }
+}
+
+.dark {
+  /* כרטיסי סטטיסטיקות - שיפור ניגודיות */
+  .bg-white.p-3.md\:p-6 {
+    background-color: #1e293b;  /* רקע אפרפר כהה */
+    border: 1px solid #475569;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+
+    /* אייקונים בכרטיסים */
+    .bg-green-100 {
+      background-color: #064e3b;  /* רקע ירוק כהה */
+      .text-green-600 {
+        color: #4ade80 !important;  /* ירוק בהיר */
+      }
+    }
+
+    .bg-red-100 {
+      background-color: #7f1d1d;  /* רקע אדום כהה */
+      .text-red-600 {
+        color: #f87171 !important;  /* אדום בהיר */
+      }
+    }
+
+    .bg-blue-100 {
+      background-color: #1e3a8a;  /* רקע כחול כהה */
+      .text-blue-600 {
+        color: #60a5fa !important;  /* כחול בהיר */
+      }
+    }
+
+    /* טקסט */
+    .text-gray-500 {
+      color: #e2e8f0 !important;  /* אפור בהיר */
+    }
+
+    .text-gray-800 {
+      color: #ffffff !important;  /* לבן */
+      font-weight: 700;
+    }
+
+    .text-gray-700 {
+      color: #f1f5f9 !important;  /* אפור בהיר מאוד */
+    }
+
+    /* פרוגרס בר */
+    .bg-gray-100 {
+      background-color: #334155;  /* אפור כהה */
+    }
+
+    .bg-blue-500 {
+      background-color: #2563eb;  /* כחול */
+    }
+  }
+}
+
+/* מצב רגיל - שיפור ניגודיות בכפתורים נבחרים */
+.bg-blue-600 {
+  /* טקסט מעל הכפתור הכחול */
+  & + .text-gray-500,
+  & ~ .text-gray-500 {
+    color: #1d4ed8 !important;  /* כחול כהה */
+    font-weight: 600;
+  }
+
+  /* טקסט בתוך הכפתור */
+  .text-gray-500,
+  .text-gray-600 {
+    color: #ffffff !important;
+  }
+}
+
+/* מצב כהה */
+.dark {
+  .bg-blue-600 {
+    /* טקסט מעל הכפתור הכחול */
+    & + .text-gray-500,
+    & ~ .text-gray-500 {
+      color: #60a5fa !important;  /* כחול בהיר */
+      font-weight: 600;
+    }
+
+    /* טקסט בתוך הכפתור */
+    .text-gray-500,
+    .text-gray-600 {
+      color: #ffffff !important;
+    }
+  }
+}
+
+/* כפתורי תזכורות - מצב רגיל */
+button.px-3.py-1\.5.rounded-full {
+  /* כפתור לא נבחר */
+  &.bg-gray-100 {
+    color: #1e40af;  /* כחול כהה */
+    font-weight: 600;
+
+    &:hover {
+      background-color: #dbeafe;  /* כחול בהיר */
+      color: #1d4ed8;  /* כחול כהה יותר */
+    }
+  }
+
+  /* כפתור נבחר */
+  &.bg-blue-500,
+  &.bg-blue-600 {
+    color: #ffffff;
+    font-weight: 600;
+
+    &:hover {
+      background-color: #2563eb;
+    }
+  }
+
+  /* גדלים שונים */
+  &.text-sm {
+    font-size: 0.875rem;
+  }
+
+  &.text-base {
+    font-size: 1rem;
+  }
+
+  &.text-lg {
+    font-size: 1.125rem;
+  }
+}
+
+/* מצב כהה */
+.dark {
+  button.px-3.py-1\.5.rounded-full {
+    /* כפתור לא נבחר */
+    &.bg-gray-100 {
+      color: #e2e8f0;  /* אפור בהיר */
+      background-color: #1e293b;
+
+      &:hover {
+        background-color: #334155;
+        color: #ffffff;
+      }
+    }
+
+    /* כפתור נבחר */
+    &.bg-blue-500,
+    &.bg-blue-600 {
+      background-color: #2563eb;
+      color: #ffffff;
+
+      &:hover {
+        background-color: #3b82f6;
+      }
+    }
+  }
+}
+
+/* כפתורי גודל טקסט - מצב רגיל */
+.flex.gap-2 button {
+  /* כפתור לא נבחר */
+  &.bg-gray-100 {
+    color: #1e40af;  /* כחול כהה */
+    font-weight: 600;
+
+    &:hover {
+      background-color: #dbeafe;  /* כחול בהיר */
+      color: #1d4ed8;  /* כחול כהה יותר */
+    }
+  }
+
+  /* כפתור נבחר */
+  &.bg-blue-500 {
+    background-color: #2563eb;
+    color: #ffffff;
+    font-weight: 600;
+  }
+}
+
+/* מצב כהה */
+.dark {
+  .flex.gap-2 button {
+    /* כפתור לא נבחר */
+    &.bg-gray-100 {
+      background-color: #1e293b;
+      color: #e2e8f0;  /* אפור בהיר */
+
+      &:hover {
+        background-color: #334155;
+        color: #ffffff;
+      }
+    }
+
+    /* כפתור נבחר */
+    &.bg-blue-500 {
+      background-color: #2563eb;
+      color: #ffffff;
+
+      &:hover {
+        background-color: #3b82f6;
+      }
+    }
+  }
+}
+
+/* כפתורי דחיפות - מצב רגיל */
+.grid.grid-cols-3.gap-2 {
+  button {
+    font-weight: 600;
+    position: relative;
+    border: 2px solid transparent;
+    transition: all 0.2s ease;
+
+    /* אייקון V לכפתור נבחר */
+    &.selected::before {
+      content: '✓';
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    /* דחיפות גבוהה */
+    &.bg-red-50 {
+      background-color: #fee2e2;
+      color: #dc2626;
+
+      &.selected {
+        background-color: #dc2626;
+        color: #ffffff;
+        border-color: #b91c1c;
+        box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.2);
+      }
+    }
+
+    /* דחיפות בינונית */
+    &.bg-yellow-50 {
+      background-color: #fef9c3;
+      color: #ca8a04;
+
+      &.selected {
+        background-color: #ca8a04;
+        color: #ffffff;
+        border-color: #a16207;
+        box-shadow: 0 0 0 2px rgba(202, 138, 4, 0.2);
+      }
+    }
+
+    /* דחיפות נמוכה */
+    &.bg-green-50 {
+      background-color: #dcfce7;
+      color: #16a34a;
+
+      &.selected {
+        background-color: #16a34a;
+        color: #ffffff;
+        border-color: #15803d;
+        box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.2);
+      }
+    }
+  }
+}
+
+/* מצב כהה */
+.dark {
+  .grid.grid-cols-3.gap-2 {
+    button {
+      /* דחיפות גבוהה */
+      &.bg-red-50 {
+        background-color: #450a0a;
+        color: #fca5a5;
+
+        &.selected {
+          background-color: #dc2626;
+          color: #ffffff;
+          border-color: #f87171;
+        }
+      }
+
+      /* דחיפות בינונית */
+      &.bg-yellow-50 {
+        background-color: #713f12;
+        color: #fcd34d;
+
+        &.selected {
+          background-color: #ca8a04;
+          color: #ffffff;
+          border-color: #fcd34d;
+        }
+      }
+
+      /* דחיפות נמוכה */
+      &.bg-green-50 {
+        background-color: #064e3b;
+        color: #86efac;
+
+        &.selected {
+          background-color: #16a34a;
+          color: #ffffff;
+          border-color: #86efac;
+        }
+      }
+    }
+  }
+}
+
+/* Dark Mode Styles */
+:root {
+  /* ... existing variables ... */
+
+  /* עדכון צבעי מצב כהה לניגודיות טובה יותר */
+  --bg-dark: #0a0f1a;          /* רקע כהה יותר */
+  --surface-dark: #1a2234;     /* משטח כהה */
+  --text-dark: #ffffff;        /* טקסט לבן מלא */
+  --text-secondary-dark: #e2e8f0; /* טקסט משני בהיר */
+  --border-dark: #3b4658;      /* גבולות בולטים */
+  --hover-dark: #2a3446;       /* הובר כהה */
+  
+  /* צבעי הדגשה למצב כהה */
+  --primary-dark: #3b82f6;     /* כחול נגיש */
+  --primary-hover-dark: #2563eb; /* כחול כהה להובר */
+  --success-dark: #22c55e;     /* ירוק נגיש */
+  --error-dark: #ef4444;       /* אדום נגיש */
+  --warning-dark: #f59e0b;     /* כתום נגיש */
+}
+
+.dark {
+  /* עדכון צבעי טקסט וכפתורים */
+  .text-gray-400 { color: #e2e8f0 !important; }
+  .text-gray-500 { color: #e2e8f0 !important; }
+  .text-gray-600 { color: #f8fafc !important; }
+  
+  /* אייקונים */
+  svg {
+    color: #e2e8f0;
+    &:hover {
+      color: #ffffff;
+    }
+  }
+
+  /* כפתורי פעולה */
+  button, 
+  .btn {
+    &:hover {
+      background-color: var(--hover-dark);
+      color: #ffffff;
+    }
+    
+    &:disabled {
+      background-color: #475569;
+      color: #94a3b8;
+    }
+  }
+
+  /* טאבים */
+  .tab {
+    color: #e2e8f0;
+    
+    &:hover {
+      color: #ffffff;
+      background-color: var(--hover-dark);
+    }
+    
+    &.active {
+      color: #ffffff;
+      background-color: var(--primary-dark);
+    }
+  }
+
+  /* שדות קלט */
+  input, 
+  select, 
+  textarea {
+    background-color: var(--bg-dark);
+    color: #ffffff;
+    border-color: var(--border-dark);
+
+    &::placeholder {
+      color: #94a3b8;
+    }
+
+    &:hover {
+      border-color: #60a5fa;
+    }
+
+    &:focus {
+      border-color: #3b82f6;
+      background-color: var(--surface-dark);
+    }
+  }
+
+  /* כפתורי עדיפות */
+  .priority-btn {
+    &.high {
+      background-color: #991b1b;
+      color: #fecaca;
+      &:hover, &.selected {
+        background-color: #dc2626;
+        color: #ffffff;
+      }
+    }
+
+    &.medium {
+      background-color: #854d0e;
+      color: #fef08a;
+      &:hover, &.selected {
+        background-color: #ca8a04;
+        color: #ffffff;
+      }
+    }
+
+    &.low {
+      background-color: #166534;
+      color: #86efac;
+      &:hover, &.selected {
+        background-color: #16a34a;
+        color: #ffffff;
+      }
+    }
+  }
+
+  /* תפריטים נפתחים */
+  .dropdown-menu {
+    background-color: var(--surface-dark);
+    border-color: var(--border-dark);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+
+    .dropdown-item {
+      color: #e2e8f0;
+      
+      &:hover {
+        background-color: var(--hover-dark);
+        color: #ffffff;
+      }
+    }
+  }
+
+  /* הודעות מערכת */
+  .notification {
+    &.success {
+      background-color: #065f46;
+      color: #ffffff;
+    }
+    
+    &.error {
+      background-color: #991b1b;
+      color: #ffffff;
+    }
+    
+    &.warning {
+      background-color: #854d0e;
+      color: #ffffff;
+    }
+  }
+}
+
+.dark {
+  /* דוגמת גודל טקסט */
+  .bg-gray-50.rounded-lg {
+    background-color: var(--surface-dark);
+    border: 1px solid var(--border-dark);
+    color: var(--text-dark);
+    
+    /* שיפור ניגודיות */
+    p {
+      color: #ffffff;
+      font-weight: 500;
+    }
+
+    /* הוספת הובר עדין */
+    &:hover {
+      background-color: var(--hover-dark);
+      border-color: var(--primary-dark);
+    }
+  }
+}
+
+.dark {
+  /* כותרת תפריט */
+  .text-xl.font-bold {
+    color: #ffffff;  /* לבן מלא */
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);  /* צל עדין להדגשה */
+  }
 }

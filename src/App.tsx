@@ -19,7 +19,9 @@ import {
   Trash2,
   ListTodo,
   ChevronUp,
-  ChevronDown
+  ChevronDown,
+  Sun,
+  Moon
 } from 'lucide-react';
 import NewTaskForm from './components/NewTaskForm';
 import CalendarView from './components/CalendarView';
@@ -29,6 +31,7 @@ import TaskItem from './components/TaskItem';
 import { Task } from './types/task';
 import NewCategoryModal from './components/categories/NewCategoryModal';
 import { Category, ColorType } from './types/category';
+import { useTheme } from './contexts/ThemeContext';
 
 // עדכון הממשק של הסינונים
 interface FilterState {
@@ -37,7 +40,14 @@ interface FilterState {
   priority: 'all' | 'high' | 'medium' | 'low';
 }
 
+// הוספת טיפוסים חסרים
+interface NotificationType {
+  type: 'success' | 'error';
+  message: string;
+}
+
 function App() {
+  const { isDarkMode, toggleDarkMode } = useTheme();
   const [isSidebarOpen, setSidebarOpen] = useState(true);
   const [currentView, setCurrentView] = useState('dashboard');
   const [showNewTask, setShowNewTask] = useState(false);
@@ -210,7 +220,7 @@ function App() {
         return false;
       }
       
-      // אם עברנו את בדיקת הקטגוריה, בודקים את החיפוש
+      // אם עבנו את בדיקת הקטגוריה, בודקים את החיפוש
       return task.title.toLowerCase().includes(searchLower) ||
              task.description.toLowerCase().includes(searchLower) ||
              task.location?.toLowerCase().includes(searchLower);
@@ -240,10 +250,11 @@ function App() {
           if (taskDate.toDateString() !== today.toDateString()) return false;
           break;
         case 'week':
-          if (taskDate < weekStart || taskDate > today) return false;
+          if (taskDate < weekStart || taskDate > new Date(weekStart.getTime() + 7 * 24 * 60 * 60 * 1000)) return false;
           break;
         case 'month':
-          if (taskDate < monthStart || taskDate > today) return false;
+          const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+          if (taskDate < monthStart || taskDate > monthEnd) return false;
           break;
       }
 
@@ -273,7 +284,7 @@ function App() {
     }
   };
 
-  // עדכון הרינדור של הדשבורד - החלק הרלוונטי
+  // עדכון הרנדור של הדשבורד - החלק הרלוונטי
   const renderDashboard = () => (
     <div className="h-screen flex flex-col bg-gray-100">
       <header className="bg-white shadow-sm relative">
@@ -292,34 +303,50 @@ function App() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="חיפוש משימות..."
-                className="w-full pr-12 pl-12 py-3 bg-white border-2 border-gray-100 rounded-2xl focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 hover:border-gray-200 transition-all text-sm font-medium placeholder:text-gray-400"
+                className="w-full pr-12 pl-12 py-3 bg-white border-2 border-gray-100 rounded-2xl focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 hover:border-gray-200 transition-all text-sm font-medium placeholder:text-gray-400 dark:bg-gray-800 dark:border-gray-700 dark:text-white dark:placeholder-gray-400 dark:hover:border-gray-600 dark:focus:border-blue-500 dark:focus:ring-blue-500/20"
               />
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery('')}
-                  className="absolute left-4 top-3.5 text-gray-400 hover:text-gray-600 transition-colors"
+                  className="absolute left-4 top-3.5 text-gray-400 hover:text-gray-600 transition-colors dark:text-gray-400 dark:hover:bg-gray-700/50 dark:hover:text-gray-200 rounded-full p-1"
                 >
                   <X className="w-5 h-5" />
                 </button>
               )}
             </div>
 
-            {/* כפתור צף להוספת משימה */}
-            <button 
-              onClick={() => setShowNewTask(true)}
-              className="bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 transition-all hover:shadow-xl group flex-shrink-0"
-            >
-              <div className="relative p-2.5 md:px-5 md:py-2.5 flex items-center gap-2">
-                <Plus className="w-5 h-5" />
-                <span className="hidden md:inline whitespace-nowrap">משימה חדשה</span>
-              </div>
-            </button>
+            <div className="flex items-center gap-2">
+              {/* כפתור מצב לילה */}
+              <button 
+                onClick={toggleDarkMode}
+                className="p-2 hover:bg-gray-50 rounded-full relative flex-shrink-0 transition-colors dark:hover:bg-gray-700/50 dark:text-gray-300"
+                title={isDarkMode ? "עבור למצב יום" : "עבור למצב לילה"}
+                aria-label={isDarkMode ? "עבור למצב יום" : "עבור למצב לילה"}
+              >
+                {isDarkMode ? (
+                  <Sun className="w-5 h-5 text-gray-500" />
+                ) : (
+                  <Moon className="w-5 h-5 text-gray-500" />
+                )}
+              </button>
 
-            {/* התראות */}
-            <button className="p-2 hover:bg-gray-50 rounded-full relative flex-shrink-0">
-              <Bell className="w-5 h-5 text-gray-500" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-            </button>
+              {/* כפתור צף להוספת משימה */}
+              <button 
+                onClick={() => setShowNewTask(true)}
+                className="bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 transition-all hover:shadow-xl group flex-shrink-0 dark:bg-blue-600 dark:hover:bg-blue-500"
+              >
+                <div className="relative p-2.5 md:px-5 md:py-2.5 flex items-center gap-2">
+                  <Plus className="w-5 h-5" />
+                  <span className="hidden md:inline whitespace-nowrap">משימה חדשה</span>
+                </div>
+              </button>
+
+              {/* התראות */}
+              <button className="p-2 hover:bg-gray-50 rounded-full relative flex-shrink-0 transition-colors dark:hover:bg-gray-700/50 dark:text-gray-300">
+                <Bell className="w-5 h-5 text-gray-500" />
+                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+              </button>
+            </div>
           </div>
 
           {/* שורה שנייה - פילטרים */}
@@ -343,20 +370,20 @@ function App() {
                     if (searchQuery) setSearchQuery('');
                     if (activeCategory !== 'all') setActiveCategory('all');
                   }}
-                  className="text-blue-600 hover:text-blue-700 text-sm flex-shrink-0 mr-2"
+                  className="text-blue-600 hover:text-blue-700 text-sm flex-shrink-0 mr-2 dark:text-blue-400 dark:hover:text-blue-300 transition-colors rounded-lg px-2 py-1 dark:hover:bg-gray-700/50"
                 >
                   נקה
                 </button>
               </div>
             )}
 
-            {/* סרגל סינון - עיצוב משופר */}
+            {/* סרל סינון - עיצוב משופר */}
             {!searchQuery && (
               <>
                 {/* כותרת הסינון - כל השורה לחיצה */}
                 <button 
                   onClick={() => setShowFilters(!showFilters)}
-                  className="w-full flex items-center justify-between py-2 text-gray-500 hover:text-gray-700 transition-colors md:hidden"
+                  className="w-full flex items-center justify-between py-2 text-gray-500 hover:text-gray-700 transition-colors md:hidden dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-700/50 rounded-lg px-2"
                 >
                   <div className="flex items-center gap-2">
                     <Filter className="w-4 h-4" />
@@ -398,8 +425,8 @@ function App() {
                             }}
                             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
                               activeCategory === category.id
-                                ? 'bg-blue-600 text-white shadow-sm'
-                                : 'text-gray-600 hover:bg-gray-50'
+                                ? 'bg-blue-600 text-white shadow-sm dark:bg-blue-600 dark:text-white'
+                                : 'text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700/50'
                             }`}
                           >
                             <span className={`w-1.5 h-1.5 rounded-full ${getColorClass(category.color)}`} />
@@ -432,7 +459,7 @@ function App() {
                             className={`flex-1 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
                               filters.date === option.id
                                 ? 'bg-blue-600 text-white shadow-sm'
-                                : 'text-gray-600 hover:bg-gray-50'
+                                : 'text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700/50'
                             }`}
                           >
                             {option.label}
@@ -462,7 +489,7 @@ function App() {
                             className={`flex-1 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
                               filters.status === option.id
                                 ? 'bg-blue-600 text-white shadow-sm'
-                                : 'text-gray-600 hover:bg-gray-50'
+                                : 'text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700/50'
                             }`}
                           >
                             {option.label}
@@ -493,7 +520,7 @@ function App() {
                             className={`flex-1 px-4 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-1.5 ${
                               filters.priority === option.id
                                 ? `bg-${option.color}-500 text-white shadow-sm`
-                                : 'text-gray-600 hover:bg-gray-50'
+                                : 'text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700/50'
                             }`}
                           >
                             {option.id !== 'all' && (
@@ -568,16 +595,12 @@ function App() {
 
   // פונקציית עזר להמר עדיפות לטקסט וצבע - נעדכן את הצבעים
   const getPriorityDetails = (priority: string) => {
-    switch (priority) {
-      case 'high':
-        return { text: 'גבוהה', color: 'text-red-600', bgColor: 'bg-red-50' };
-      case 'medium':
-        return { text: 'בינונית', color: 'text-yellow-600', bgColor: 'bg-yellow-50' };
-      case 'low':
-        return { text: 'נמוכה', color: 'text-green-600', bgColor: 'bg-green-50' };
-      default:
-        return { text: 'לא הוגדר', color: 'text-gray-600', bgColor: 'bg-gray-50' };
-    }
+    const details = {
+      high: { text: 'גבוהה', color: 'text-red-800', bgColor: 'bg-red-100' },
+      medium: { text: 'בינונית', color: 'text-yellow-800', bgColor: 'bg-yellow-100' },
+      low: { text: 'נמוכה', color: 'text-green-800', bgColor: 'bg-green-100' }
+    };
+    return details[priority as keyof typeof details] || details.medium;
   };
 
   const [showNewCategory, setShowNewCategory] = useState(false);
@@ -599,21 +622,52 @@ function App() {
     updateCategoryCounts();
   }, [tasks]);
 
-  // עדכון הפונקציה לטיפול בלחיצה על קטגוריה
-  const handleCategoryClick = (categoryId: string) => {
-    setActiveCategory(categoryId);
-
-    // אם נמצאים בהגדרות, לא עושים כלום
-    if (currentView === 'settings') {
-      return;
-    }
-
-    // אם נמצאים בדשבורד או יומן, רק מעדכנים את הקטגוריה הפעילה
-    // אם נמצאים בסטטיסטיקות, נשארים שם
-    // אין צורך לעבור לדשבורד
+  // עדכון פונקציית השכפול במודל
+  const handleDuplicate = (task: Task) => {
+    const newTask = {
+      ...task,
+      id: undefined,
+      title: `העתק של ${task.title}`
+    };
+    handleTaskUpdate(newTask);
+    setShowTaskDetails(false);
+    setNotification({ type: 'success', message: 'המשימה שוכפלה בהצלחה' });
+    setTimeout(() => setNotification(null), 3000);
   };
 
-  // עדכון הרינדור של הסרגל הצידי
+  // עדכון הפונקציה לסגירת מודל פרטי משימה
+  const handleCloseTaskDetails = () => {
+    setShowTaskDetails(false);
+    setSelectedTaskId(null);
+  };
+
+  const [showFilters, setShowFilters] = useState(false);
+
+  // עדכון טיפוס ה-state של התאריך ההתחלתי ל-Date
+  const [initialTaskDate, setInitialTaskDate] = useState<Date | null>(null);
+
+  // עדכון הפונקציה להוספת משימה חדשה
+  const handleNewTask = (dateOrEvent?: React.MouseEvent | Date) => {
+    if (dateOrEvent instanceof Date) {
+      setInitialTaskDate(dateOrEvent);
+    } else {
+      setInitialTaskDate(null);
+    }
+    setShowNewTask(true);
+  };
+
+  // נוסיף את ה-state למצב התפריט
+  const [openMenuTaskId, setOpenMenuTaskId] = useState<number | null>(null);
+
+  // נוסיף את ה-state להודעות
+  const [notification, setNotification] = useState<NotificationType | null>(null);
+
+  // נעדכן את פונקציית השכפול
+  const handleMenuToggle = (taskId: number | null) => {
+    setOpenMenuTaskId(taskId);
+  };
+
+  // נוסיף את פונקציית renderSidebar
   const renderSidebar = () => (
     <aside className="bg-white border-l hidden md:flex flex-col">
       {/* Sidebar Header */}
@@ -660,20 +714,13 @@ function App() {
           {categories.map((category) => (
             <button
               key={category.id}
-              onClick={() => handleCategoryClick(category.id)}
+              onClick={() => setActiveCategory(category.id)}
               title={!isSidebarOpen ? `${category.name} (${category.count})` : undefined}
               className={`w-full px-3 py-2 rounded-lg text-right flex items-center transition-all ${
                 activeCategory === category.id 
                   ? 'bg-gray-100 font-medium'
                   : 'hover:bg-gray-50'
-              } ${
-                // מוסיפים disabled style כשנמצאים בהגדרות
-                currentView === 'settings' 
-                  ? 'opacity-50 cursor-not-allowed' 
-                  : ''
               }`}
-              // מבטלים את הלחיצה בהגדרות
-              disabled={currentView === 'settings'}
             >
               <span className={`w-2 h-2 rounded-full ${getColorClass(category.color)}`} />
               {isSidebarOpen && (
@@ -703,63 +750,18 @@ function App() {
     </aside>
   );
 
-  // הוספת state לניהול התפריט הפתוח
-  const [openMenuTaskId, setOpenMenuTaskId] = useState<number | null>(null);
-
-  // פונקציה לטיפול בפתיחה/סגירה של תפריט
-  const handleMenuToggle = (taskId: number | null) => {
-    setOpenMenuTaskId(taskId);
-  };
-
+  // הוספת state לחלון אישור מחיקה
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  // הוספת state להודעות
-  const [notification, setNotification] = useState<{
-    message: string;
-    type: 'success' | 'error';
-  } | null>(null);
-
-  // עדכון פונקציית השכפול במודל
-  const handleDuplicate = (task: Task) => {
-    const newTask = {
-      ...task,
-      id: Math.max(...tasks.map(t => t.id ?? 0)) + 1,
-      title: `העתק של ${task.title}`
-    };
-    setTasks(prev => [...prev, newTask]);
-    setShowTaskDetails(false);
-    
-    // הצגת הודעת הצלחה
-    setNotification({
-      message: 'המשימה שוכפלה בהצלחה',
-      type: 'success'
-    });
-
-    // הסרת ההודעה אחרי 3 שניות
-    setTimeout(() => {
-      setNotification(null);
-    }, 3000);
-  };
-
-  // עדכון הפונקציה לסגירת מודל פרטי משימה
-  const handleCloseTaskDetails = () => {
-    setShowTaskDetails(false);
-    setSelectedTaskId(null); // מאפס את ה-ID של המשימה הנבחרת
-  };
-
-  const [showFilters, setShowFilters] = useState(false);
-
-  // הוספת state לתאריך ההתחלתי
-  const [initialTaskDate, setInitialTaskDate] = useState<Date | null>(null);
-
-  // עדכון הפונקציה להוספת משימה חדשה
-  const handleNewTask = (dateOrEvent?: React.MouseEvent | Date) => {
-    if (dateOrEvent instanceof Date) {
-      setInitialTaskDate(dateOrEvent);
-    } else {
-      setInitialTaskDate(null);
+  // עדכון פונקציית הטיפול במחיקה
+  const handleDeleteConfirm = () => {
+    if (selectedTaskId) {
+      handleTaskDelete(selectedTaskId);
+      setShowDeleteConfirm(false);
+      setShowTaskDetails(false);
+      setNotification({ type: 'success', message: 'המשימה נמחקה בהצלחה' });
+      setTimeout(() => setNotification(null), 3000);
     }
-    setShowNewTask(true);
   };
 
   return (
@@ -839,7 +841,7 @@ function App() {
             setInitialTaskDate(null);
           }}
           initialTask={selectedTaskId ? tasks.find(t => t.id === selectedTaskId) : undefined}
-          initialDate={initialTaskDate} // העברת התאריך ההתחלתי
+          initialDate={initialTaskDate}
           onSubmit={(updatedTask) => {
             if (selectedTaskId) {
               // עדכון משימה קיימת
@@ -987,7 +989,7 @@ function App() {
                   onClick={() => setShowDeleteConfirm(true)}
                   className="px-4 py-2 bg-red-50 text-red-600 rounded-lg flex items-center gap-2 hover:bg-red-100 transition-colors"
                   title="מחק משימה"
-                  aria-label="מחק את המשימה לצמיתו"
+                  aria-label="מחק את המשימה לצמיתות"
                 >
                   <Trash2 className="w-4 h-4" />
                   מחיקה
@@ -1028,6 +1030,7 @@ function App() {
         />
       )}
 
+      {/* חלון אישור מחיקה */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[60]">
           <div className="bg-white rounded-lg w-full max-w-md p-6">
@@ -1040,13 +1043,7 @@ function App() {
             </p>
             <div className="flex gap-3">
               <button
-                onClick={() => {
-                  if (selectedTaskId) {  // וידוא שיש ID למחיקה
-                    handleTaskDelete(selectedTaskId);
-                    setShowDeleteConfirm(false);
-                    setShowTaskDetails(false);
-                  }
-                }}
+                onClick={handleDeleteConfirm}
                 className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
               >
                 כן, מחק
