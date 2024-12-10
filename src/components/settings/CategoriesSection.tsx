@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Tag, Edit, Trash2 } from 'lucide-react';
 import NewCategoryModal from '../categories/NewCategoryModal';
-import { ColorType, Category, NewCategory } from '../../types/category';
+import type { Category, NewCategory, ColorType, CategoryFormData } from '../../backend/types/models';
+import { categoriesApi } from '../../backend/api/categories';
 
 interface CategoriesSectionProps {
   categories: Category[];
+  setCategories: (categories: Category[]) => void;
   onAddCategory: (category: NewCategory) => void;
   onEditCategory: (id: string, updates: Partial<NewCategory>) => void;
   onDeleteCategory: (id: string) => void;
@@ -12,12 +14,15 @@ interface CategoriesSectionProps {
 
 const CategoriesSection: React.FC<CategoriesSectionProps> = ({
   categories,
+  setCategories,
   onAddCategory,
   onEditCategory,
   onDeleteCategory
 }) => {
   const [showNewCategory, setShowNewCategory] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const getColorClass = (color: ColorType) => {
     const colors: Record<ColorType, string> = {
@@ -33,6 +38,73 @@ const CategoriesSection: React.FC<CategoriesSectionProps> = ({
       cyan: 'bg-cyan-500'
     };
     return colors[color];
+  };
+
+  // טעינת הקטגוריות
+  const loadCategories = async (userId: string) => {
+    setLoading(true);
+    const { data, error } = await categoriesApi.getAll(userId);
+    
+    if (error) {
+      setError('שגיאה בטעינת הקטגוריות');
+    } else {
+      // המרה מפורשת של הצבע ל-ColorType
+      const typedCategories = (data || []).map(cat => ({
+        ...cat,
+        color: cat.color as ColorType
+      }));
+      setCategories(typedCategories);
+    }
+    setLoading(false);
+  };
+
+  // מחיקת קטגוריה
+  const handleDeleteCategory = async (categoryId: string) => {
+    try {
+      const { error } = await categoriesApi.delete(categoryId);
+      
+      if (error) {
+        if (error.message.includes('משימות פעילות')) {
+          setError('לא ניתן למחוק קטגוריה שיש בה משימות פעילות');
+        } else {
+          setError('שגיאה במחיקת הקטגוריה');
+        }
+        return;
+      }
+
+      setCategories(categories.filter(cat => cat.id !== categoryId));
+    } catch (err) {
+      setError('שגיאה לא צפויה במחיקת הקטגוריה');
+    }
+  };
+
+  // הוספת קטגוריה חדשה
+  const handleAddCategory = async (newCategoryData: NewCategory) => {
+    try {
+      const newCategory = {
+        ...newCategoryData,
+        user_id: 'current-user-id',
+        count: 0,
+        color: newCategoryData.color as ColorType
+      };
+
+      const { data, error } = await categoriesApi.create(newCategory);
+      
+      if (error) {
+        setError('שגיאה ביצירת הקטגוריה');
+        return;
+      }
+
+      if (data) {
+        const typedCategory = {
+          ...data,
+          color: data.color as ColorType
+        };
+        setCategories([...categories, typedCategory]);
+      }
+    } catch (err) {
+      setError('שגיאה לא צפויה ביצירת הקטגוריה');
+    }
   };
 
   return (
@@ -66,7 +138,7 @@ const CategoriesSection: React.FC<CategoriesSectionProps> = ({
                   <button 
                     onClick={() => {
                       if (category.count === 0 && confirm('האם אתה בטוח שברצונך למחוק קטגוריה זו?')) {
-                        onDeleteCategory(category.id);
+                        handleDeleteCategory(category.id);
                       } else if (category.count > 0) {
                         alert('לא ניתן למחוק קטגוריה שיש בה משימות');
                       }
@@ -94,11 +166,17 @@ const CategoriesSection: React.FC<CategoriesSectionProps> = ({
             setShowNewCategory(false);
             setEditingCategory(null);
           }}
-          onSubmit={(category: NewCategory) => {
+          onSubmit={(formData: CategoryFormData) => {
             if (editingCategory) {
-              onEditCategory(editingCategory.id, category);
+              onEditCategory(editingCategory.id, formData);
             } else {
-              onAddCategory(category);
+              // הוספת השדות החסרים לפני שליחה ל-API
+              const newCategory: NewCategory = {
+                ...formData,
+                user_id: 'current-user-id', // יוחלף ב-ID אמיתי מהאימות
+                count: 0
+              };
+              handleAddCategory(newCategory);
             }
             setShowNewCategory(false);
             setEditingCategory(null);

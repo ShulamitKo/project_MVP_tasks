@@ -1,8 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import App from './App';
-import { ThemeProvider } from './contexts/ThemeContext';
-import { AccessibilityProvider } from './contexts/AccessibilityContext';
+import AppRouter from './routes/AppRouter';
 import './index.css';
 
 // וידוא שיש אלמנט root
@@ -13,10 +11,6 @@ if (!rootElement) {
 
 ReactDOM.createRoot(rootElement).render(
   <React.StrictMode>
-    <ThemeProvider>
-      <AccessibilityProvider>
-        <App />
-      </AccessibilityProvider>
-    </ThemeProvider>
+    <AppRouter />
   </React.StrictMode>
 );

@@ -1,18 +1,10 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
-
-type ColorType = 'blue' | 'green' | 'yellow' | 'red' | 'purple' | 'pink' | 'indigo' | 'teal' | 'orange' | 'cyan';
-
-interface Category {
-  id: string;
-  name: string;
-  count: number;
-  color: ColorType;
-}
+import type { ColorType, Category, CategoryFormData } from '../../backend/types/models';
 
 interface NewCategoryModalProps {
   onClose: () => void;
-  onSubmit: (category: { name: string; color: ColorType }) => void;
+  onSubmit: (category: CategoryFormData) => void;
   initialCategory?: Category;
 }
 

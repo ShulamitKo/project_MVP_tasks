@@ -21,7 +21,8 @@ import {
   ChevronUp,
   ChevronDown,
   Sun,
-  Moon
+  Moon,
+  LogOut
 } from 'lucide-react';
 import NewTaskForm from './components/NewTaskForm';
 import CalendarView from './components/CalendarView';
@@ -32,6 +33,8 @@ import { Task } from './types/task';
 import NewCategoryModal from './components/categories/NewCategoryModal';
 import { Category, ColorType } from './types/category';
 import { useTheme } from './contexts/ThemeContext';
+import { useAuth } from './contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 // עדכון הממשק של הסינונים
 interface FilterState {
@@ -47,6 +50,8 @@ interface NotificationType {
 }
 
 function App() {
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
   const { isDarkMode, toggleDarkMode } = useTheme();
   const [isSidebarOpen, setSidebarOpen] = useState(true);
   const [currentView, setCurrentView] = useState('dashboard');
@@ -220,7 +225,7 @@ function App() {
         return false;
       }
       
-      // אם עבנו את בדיקת הקטגוריה, בודקים את החיפוש
+      // אם עבנו את ביקת הקטגוריה, בודקים את החיפוש
       return task.title.toLowerCase().includes(searchLower) ||
              task.description.toLowerCase().includes(searchLower) ||
              task.location?.toLowerCase().includes(searchLower);
@@ -605,7 +610,7 @@ function App() {
 
   const [showNewCategory, setShowNewCategory] = useState(false);
 
-  // הוספת פונקציה לחישוב מספר המשימו בכל קטגוריה
+  // הוספת פונקציה לחישוב מספר המשימו בכל טגוריה
   const updateCategoryCounts = () => {
     const newCategories = categories.map(category => ({
       ...category,
@@ -746,6 +751,25 @@ function App() {
             {isSidebarOpen && <span>קטגוריה חדשה</span>}
           </button>
         </div>
+
+        {/* Logout Button */}
+        <div className="mt-auto pt-4 border-t">
+          <button 
+            onClick={async () => {
+              try {
+                await signOut();
+                navigate('/login');
+              } catch (error) {
+                console.error('שגיאה בהתנתקות:', error);
+              }
+            }}
+            className="w-full flex items-center px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+            title={!isSidebarOpen ? "התנתק" : undefined}
+          >
+            <LogOut className={`w-5 h-5 ${isSidebarOpen ? 'ml-3' : 'mx-auto'}`} />
+            {isSidebarOpen && <span>התנתק</span>}
+          </button>
+        </div>
       </nav>
     </aside>
   );
@@ -763,6 +787,8 @@ function App() {
       setTimeout(() => setNotification(null), 3000);
     }
   };
+
+  console.log('App rendered, user:', user);
 
   return (
     <div className="h-screen flex bg-gray-50 text-right" dir="rtl">
@@ -829,6 +855,22 @@ function App() {
               <span className="text-xs mt-1">{item.label}</span>
             </button>
           ))}
+          {/* כפתור התנתקות למובייל */}
+          <button 
+            onClick={async () => {
+              try {
+                await signOut();
+                navigate('/login');
+              } catch (error) {
+                console.error('שגיאה בהתנתקות:', error);
+              }
+            }}
+            className="p-2 flex flex-col items-center text-red-500"
+            aria-label="התנתק"
+          >
+            <LogOut className="w-6 h-6" />
+            <span className="text-xs mt-1">התנתק</span>
+          </button>
         </div>
       </nav>
 
