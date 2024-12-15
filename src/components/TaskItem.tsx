@@ -10,16 +10,22 @@ import { Task } from '../types/task';
 import TaskActionsMenu from './TaskActionsMenu';
 import { ColorType, Category } from '../types/category';
 
+interface NotificationType {
+  message: string;
+  type: 'success' | 'error';
+}
+
 interface TaskItemProps {
   task: Task;
   onTaskUpdate: (task: Task) => void;
-  onTaskDelete: (id: number) => void;
-  onTaskEdit: (id: number) => void;
-  onTaskClick: (id: number) => void;
+  onTaskDelete: (id: string) => void;
+  onTaskEdit: (id: string) => void;
+  onTaskClick: (id: string) => void;
   categories: Category[];
   isMenuOpen: boolean;
-  onMenuToggle: (taskId: number | null) => void;
-  setNotification: React.Dispatch<React.SetStateAction<{ message: string; type: 'success' | 'error' } | null>>;
+  onMenuToggle: (id: string | null) => void;
+  setNotification: (notification: NotificationType | null) => void;
+  createTask: (task: Omit<Task, 'id'>) => Promise<Task>;
 }
 
 const TaskItem: React.FC<TaskItemProps> = ({
@@ -31,7 +37,8 @@ const TaskItem: React.FC<TaskItemProps> = ({
   categories,
   isMenuOpen,
   onMenuToggle,
-  setNotification
+  setNotification,
+  createTask
 }) => {
   const handleComplete = () => {
     onTaskUpdate({ ...task, isCompleted: !task.isCompleted });
@@ -41,21 +48,28 @@ const TaskItem: React.FC<TaskItemProps> = ({
     onTaskUpdate({ ...task, isFavorite: !task.isFavorite });
   };
 
-  const handleDuplicate = (task: Task) => {
+  const handleDuplicate = async (task: Task) => {
+    const { id: _, ...taskWithoutId } = task;
     const newTask = {
-      ...task,
-      id: undefined,
+      ...taskWithoutId,
       title: `העתק של ${task.title}`,
       isCompleted: false,
       isFavorite: false
     };
-    onTaskUpdate(newTask);
     
-    setNotification({
-      message: 'המשימה שוכפלה בהצלחה',
-      type: 'success'
-    });
-
+    try {
+      await createTask(newTask);
+      setNotification({
+        message: 'המשימה שוכפלה בהצלחה',
+        type: 'success'
+      });
+    } catch (error) {
+      setNotification({
+        message: 'שגיאה בשכפול המשימה',
+        type: 'error'
+      });
+    }
+    
     setTimeout(() => {
       setNotification(null);
     }, 3000);

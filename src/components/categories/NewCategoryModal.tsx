@@ -1,16 +1,23 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
-import type { ColorType, Category, CategoryFormData } from '../../backend/types/models';
+import { ColorType } from '../../types/category';
+import { Category } from '../../types/category';
+
+interface CategoryFormData {
+  name: string;
+  color: ColorType;
+}
 
 interface NewCategoryModalProps {
   onClose: () => void;
-  onSubmit: (category: CategoryFormData) => void;
+  onSubmit: (formData: { name: string; color: ColorType }) => Promise<void>;
   initialCategory?: Category;
 }
 
 const NewCategoryModal: React.FC<NewCategoryModalProps> = ({ onClose, onSubmit, initialCategory }) => {
-  const [categoryName, setCategoryName] = useState(initialCategory?.name || '');
+  const [name, setName] = useState(initialCategory?.name || '');
   const [selectedColor, setSelectedColor] = useState<ColorType>(initialCategory?.color || 'blue');
+  const [error, setError] = useState<string | null>(null);
 
   const colors: { id: ColorType; label: string; class: string }[] = [
     { id: 'blue', label: 'כחול', class: 'bg-blue-500' },
@@ -25,11 +32,20 @@ const NewCategoryModal: React.FC<NewCategoryModalProps> = ({ onClose, onSubmit, 
     { id: 'cyan', label: 'תכלת', class: 'bg-cyan-500' }
   ];
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (categoryName.trim()) {
-      onSubmit({ name: categoryName, color: selectedColor });
+    try {
+      await onSubmit({
+        name,
+        color: selectedColor
+      });
       onClose();
+    } catch (error) {
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError('שגיאה לא צפויה. אנא נסה שוב.');
+      }
     }
   };
 
@@ -52,8 +68,8 @@ const NewCategoryModal: React.FC<NewCategoryModalProps> = ({ onClose, onSubmit, 
             </label>
             <input
               type="text"
-              value={categoryName}
-              onChange={(e) => setCategoryName(e.target.value)}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="הכנס שם קטגוריה"
               required
@@ -84,7 +100,7 @@ const NewCategoryModal: React.FC<NewCategoryModalProps> = ({ onClose, onSubmit, 
               type="submit"
               className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
             >
-              {initialCategory ? 'שמירת שינויים' : 'הוספה'}
+              {initialCategory ? 'שמור שינויים' : 'הוספה'}
             </button>
             <button
               type="button"
@@ -95,6 +111,12 @@ const NewCategoryModal: React.FC<NewCategoryModalProps> = ({ onClose, onSubmit, 
             </button>
           </div>
         </form>
+
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
+            {error}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -17,8 +17,8 @@ interface CalendarViewProps {
   tasks: Task[];
   activeCategory: string;
   categories: Category[];
-  onTaskClick: (taskId: number) => void;
-  onNewTask: (e?: React.MouseEvent | Date) => void;
+  onTaskClick: (taskId: string) => void;
+  onNewTask: (date?: Date) => void;
   onTaskUpdate: (task: Task) => void;
 }
 
@@ -301,7 +301,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
     });
   };
 
-  // פוקציה שה לקבלת כל המשימות בחודש הנוכחי
+  // פוקצה שה לקבלת כל המשימות בחודש הנוכחי
   const getMonthTasks = () => {
     const year = selectedDate.getFullYear();
     const month = selectedDate.getMonth();
@@ -396,7 +396,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
           <div className="px-4 md:px-6 py-4 flex items-center justify-between">
             <h1 className="text-2xl font-bold text-gray-800">יומן משימות</h1>
             <button 
-              onClick={() => onNewTask()}
+              onClick={() => onNewTask(new Date())}
               className="bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 transition-all hover:shadow-xl group flex-shrink-0"
             >
               <div className="relative p-2.5 md:px-5 md:py-2.5 flex items-center gap-2">
@@ -714,9 +714,9 @@ const CalendarView: React.FC<CalendarViewProps> = ({
                   {/* הודעה כשאין משימות */}
                   {getMonthTasks().length === 0 && (
                     <div className="px-6 py-12 text-center text-gray-500">
-                      <div className="text-lg font-medium">אין משימות בחודש זה</div>
+                      <div className="text-lg font-medium">אין משימו�� בחודש זה</div>
                       <button 
-                        onClick={onNewTask}
+                        onClick={() => onNewTask(new Date())}
                         className="mt-4 text-blue-600 hover:text-blue-700 font-medium"
                       >
                         הוסף משימה חדשה

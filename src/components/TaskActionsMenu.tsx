@@ -7,13 +7,19 @@ import {
 } from 'lucide-react';
 import { Task } from '../types/task';
 
+// הוספת טיפוס NotificationType
+interface NotificationType {
+  type: 'success' | 'error';
+  message: string;
+}
+
 interface TaskActionsMenuProps {
   task: Task;
   onClose: () => void;
   onEdit: () => void;
-  onDelete: (id: number) => void;
+  onDelete: (id: string) => void;
   onDuplicate: (task: Task) => void;
-  setNotification: React.Dispatch<React.SetStateAction<{ message: string; type: 'success' | 'error' } | null>>;
+  setNotification: (notification: NotificationType | null) => void;
 }
 
 const TaskActionsMenu: React.FC<TaskActionsMenuProps> = ({
@@ -22,7 +28,7 @@ const TaskActionsMenu: React.FC<TaskActionsMenuProps> = ({
   onEdit,
   onDelete,
   onDuplicate,
-  
+  setNotification
 }) => {
   const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
 
@@ -42,6 +48,36 @@ const TaskActionsMenu: React.FC<TaskActionsMenuProps> = ({
     action();
   };
 
+  const handleDelete = (e: React.MouseEvent) => {
+    handleClick(e, () => {
+      onDelete(task.id!);
+      onClose();
+      setNotification({
+        type: 'success',
+        message: 'המשימה נמחקה בהצלחה'
+      });
+      setTimeout(() => setNotification(null), 3000);
+    });
+  };
+
+  const handleDuplicate = (e: React.MouseEvent) => {
+    handleClick(e, () => {
+      try {
+        onDuplicate(task);
+        setNotification({
+          type: 'success',
+          message: 'המשימה שוכפלה בהצלחה'
+        });
+      } catch (error) {
+        setNotification({
+          type: 'error',
+          message: 'שגיאה בשכפול המשימה'
+        });
+      }
+      setTimeout(() => setNotification(null), 3000);
+    });
+  };
+
   if (showDeleteConfirm) {
     return (
       <div 
@@ -54,16 +90,13 @@ const TaskActionsMenu: React.FC<TaskActionsMenuProps> = ({
             <span className="font-medium">אישור מחיקה</span>
           </div>
           <p className="text-sm text-gray-600">
-            האם אתה בטוח שברצונך למחוק את המשימה "{task.title}"?
+            האם אתה בטוח שברצונך למחוק את המשיחה "{task.title}"?
           </p>
         </div>
         
         <div className="p-3 flex gap-2">
           <button 
-            onClick={(e) => handleClick(e, () => {
-              onDelete(task.id!);
-              onClose();
-            })}
+            onClick={handleDelete}
             className="action-item danger flex-1 px-3 py-1.5 text-sm"
           >
             כן, מחק

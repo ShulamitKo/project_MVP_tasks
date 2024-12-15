@@ -1,16 +1,16 @@
 export type TaskPriority = 'high' | 'medium' | 'low';
-export type TaskCategory = 'work' | 'personal' | 'study' | 'shopping' | 'family';
 export type TaskRepeat = 'none' | 'daily' | 'weekly' | 'monthly';
+export type TaskCategory = string;
 
 export interface Task {
-  id?: number;
+  id: string;
   title: string;
   description: string;
   dueDate: string;
   dueTime: string;
   category: TaskCategory;
   priority: TaskPriority;
-  location?: string;
+  location: string;
   reminder: string;
   repeat: TaskRepeat;
   isCompleted: boolean;

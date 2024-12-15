@@ -1,106 +1,186 @@
 import { supabase } from '../supabase/config';
-import type { Category, Task, DBResponse } from '../types/models';
+import { Category } from '../../types/category';
+
+export interface CategoryDTO {
+  id: string;
+  user_id: string;
+  name: string;
+  color: string;
+  created_at: string;
+  updated_at: string;
+}
 
 export const categoriesApi = {
-  // הוספת קטגוריה חדשה
-  async create(category: Omit<Category, 'id' | 'created_at'>): Promise<DBResponse<Category>> {
-    try {
-      const { data, error } = await supabase
-        .from('categories')
-        .insert([category])
-        .select()
-        .single();
-
-      return { data, error };
-    } catch (error) {
-      return { data: null, error: error as Error };
-    }
-  },
-
   // קבלת כל הקטגוריות של המשתמש
-  async getAll(userId: string): Promise<DBResponse<Category[]>> {
+  async getCategories(): Promise<Category[]> {
     try {
+      console.log('Fetching categories...');
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        throw new Error('No authenticated user');
+      }
+
       const { data, error } = await supabase
         .from('categories')
         .select('*')
-        .eq('user_id', userId)
+        .eq('user_id', user.id)
         .order('name');
 
-      return { data, error };
-    } catch (error) {
-      return { data: null, error: error as Error };
-    }
-  },
-
-  // בדיקה אם יש משימות בקטגוריה
-  async hasActiveTasks(categoryId: string): Promise<boolean> {
-    try {
-      const { count, error } = await supabase
-        .from('tasks')
-        .select('*', { count: 'exact', head: true })
-        .eq('category_id', categoryId);
-
-      if (error) throw error;
-      return (count || 0) > 0;
-    } catch (error) {
-      console.error('שגיאה בבדיקת משימות בקטגוריה:', error);
-      return false;
-    }
-  },
-
-  // מחיקת קטגוריה
-  async delete(categoryId: string): Promise<DBResponse<null>> {
-    try {
-      // בדיקה אם יש משימות בקטגוריה
-      const hasTasks = await this.hasActiveTasks(categoryId);
-      
-      if (hasTasks) {
-        return {
-          data: null,
-          error: new Error('לא ניתן למחוק קטגוריה שיש בה משימות פעילות')
-        };
+      if (error) {
+        console.error('Error fetching categories:', error);
+        throw error;
       }
 
-      const { error } = await supabase
-        .from('categories')
-        .delete()
-        .eq('id', categoryId);
+      console.log('Categories fetched:', data);
+      return [
+        { id: 'all', name: 'הכל', color: 'blue', count: 0 },
+        ...(data?.map(categoryDTO => ({
+          id: categoryDTO.id,
+          name: categoryDTO.name,
+          color: categoryDTO.color,
+          count: 0
+        })) || [])
+      ];
 
-      return { data: null, error };
     } catch (error) {
-      return { data: null, error: error as Error };
+      console.error('Failed to fetch categories:', error);
+      // במקרה של בעיית חיבור, נחזיר לפחות את קטגוריית 'הכל'
+      return [{ id: 'all', name: 'הכל', color: 'blue', count: 0 }];
     }
   },
 
-  // עדכון קטגוריה
-  async update(id: string, updates: Partial<Category>): Promise<DBResponse<Category>> {
+  // הוספת קטגוריה חדשה
+  async createCategory(category: Omit<Category, 'id' | 'count'>): Promise<Category> {
     try {
+      console.log('Creating category:', category);
+      
+      // בדיקת חיבור לאינטרנט
+      if (!navigator.onLine) {
+        throw new Error('אין חיבור לאינטרנט. אנא בדוק את החיבור ונסה שוב.');
+      }
+      
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        throw new Error('לא נמצא משתמש מחובר. אנא התחבר מחדש.');
+      }
+
+      // בדיקה אם כבר קיימת קטגוריה עם אותו שם למשתמש זה
+      const { data: existingCategories, error: checkError } = await supabase
+        .from('categories')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('name', category.name);
+
+      if (checkError) {
+        console.error('Error checking existing category:', checkError);
+        throw new Error('שגיאה בבדיקת קטגוריות קיימות');
+      }
+
+      if (existingCategories && existingCategories.length > 0) {
+        throw new Error('קטגוריה בשם זה כבר קיימת');
+      }
+
+      // יצירת הקטגוריה החדשה
       const { data, error } = await supabase
         .from('categories')
-        .update(updates)
-        .eq('id', id)
+        .insert({
+          name: category.name,
+          color: category.color,
+          user_id: user.id
+        })
         .select()
         .single();
 
-      return { data, error };
+      if (error) {
+        console.error('Error creating category:', error);
+        throw new Error('שגיאה ביצירת הקטגוריה');
+      }
+
+      console.log('Category created:', data);
+      return {
+        id: data.id,
+        name: data.name,
+        color: data.color,
+        count: 0
+      };
+
     } catch (error) {
-      return { data: null, error: error as Error };
+      console.error('Failed to create category:', error);
+      if (error instanceof Error) {
+        throw new Error(error.message);
+      }
+      throw new Error('שגיאה ביצירת קטגוריה. אנא נסה שוב מאוחר יותר.');
     }
   },
 
-  // ספירת משימות בקטגוריה
-  async getTaskCount(categoryId: string): Promise<number> {
-    try {
-      const { count, error } = await supabase
-        .from('tasks')
-        .select('*', { count: 'exact', head: true })
-        .eq('category_id', categoryId);
-
-      if (error) throw error;
-      return count || 0;
-    } catch (error) {
-      console.error('שגיאה בספירת משימות:', error);
-      return 0;
+  // עדכון קטגוריה קיימת
+  async updateCategory(id: string, updates: Partial<Omit<Category, 'id' | 'count'>>): Promise<Category> {
+    console.log('Updating category:', { id, updates });
+    
+    // קבלת המשתמש הנוכחי
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      throw new Error('No authenticated user');
     }
+
+    // בדיקה שהקטגוריה שייכת למשתמש
+    if (id !== 'all') {  // מתעלם מקטגוריית 'הכל' המיוחדת
+      const { data: categoryData, error: checkError } = await supabase
+        .from('categories')
+        .select('*')
+        .eq('id', id)
+        .eq('user_id', user.id)
+        .single();
+
+      if (checkError || !categoryData) {
+        console.error('Error checking category ownership:', checkError);
+        throw new Error('Category not found or unauthorized');
+      }
+    }
+
+    // אם זו קטגוריית 'הכל', לא מבצעים עדכון בדאטאבייס
+    if (id === 'all') {
+      return {
+        id: 'all',
+        name: 'הכל',
+        color: 'blue',
+        count: 0
+      };
+    }
+
+    // עדכון הקטגוריה
+    const { data, error } = await supabase
+      .from('categories')
+      .update(updates)
+      .eq('id', id)
+      .eq('user_id', user.id)  // וידוא שמעדכנים רק קטגוריות של המשתמש
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error updating category:', error);
+      throw error;
+    }
+
+    console.log('Category updated:', data);
+    return {
+      id: data.id,
+      name: data.name,
+      color: data.color,
+      count: 0  // מתעדכן בצד הקליינט
+    };
+  },
+
+  // מחיקת קטגוריה
+  async deleteCategory(id: string): Promise<void> {
+    const { error } = await supabase
+      .from('categories')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
   }
 }; 

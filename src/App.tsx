@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Home,
   Calendar,
@@ -35,6 +35,7 @@ import { Category, ColorType } from './types/category';
 import { useTheme } from './contexts/ThemeContext';
 import { useAuth } from './contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { useData } from './contexts/DataContext';
 
 // עדכון הממשק של הסינונים
 interface FilterState {
@@ -51,93 +52,24 @@ interface NotificationType {
 
 function App() {
   const { user, signOut } = useAuth();
+  const { 
+    tasks, 
+    categories, 
+    isLoading,
+    createTask,
+    updateTask,
+    deleteTask,
+    createCategory,
+    updateCategory,
+    deleteCategory,
+    refreshData
+  } = useData();
   const navigate = useNavigate();
   const { isDarkMode, toggleDarkMode } = useTheme();
   const [isSidebarOpen, setSidebarOpen] = useState(true);
   const [currentView, setCurrentView] = useState('dashboard');
   const [showNewTask, setShowNewTask] = useState(false);
   const [activeCategory, setActiveCategory] = useState('all');
-  const [tasks, setTasks] = useState<Task[]>([
-    {
-      id: 1,
-      title: 'פגישת צוות שבועית',
-      description: 'פגישה שבועית לסקירת התקדמות הפרויקט',
-      dueDate: '2024-11-13',
-      dueTime: '10:00',
-      category: 'work',
-      priority: 'high',
-      location: 'חדר ישיבות ראשי',
-      reminder: '15',
-      repeat: 'weekly',
-      isCompleted: false,
-      isFavorite: true
-    },
-    {
-      id: 2,
-      title: 'הכנת מצגת לקוח',
-      description: 'הכנת מצגת לפגישה עם לקוח חדש',
-      dueDate: '2024-11-14',
-      dueTime: '14:00',
-      category: 'work',
-      priority: 'medium',
-      location: 'משרד',
-      reminder: '30',
-      repeat: 'none',
-      isCompleted: false,
-      isFavorite: false
-    },
-    {
-      id: 3,
-      title: 'עדכון דו"ח חודשי',
-      description: 'הכנת דו"ח חודשי לפעילות המחלקה',
-      dueDate: '2024-11-18',
-      dueTime: '16:00',
-      category: 'work',
-      priority: 'low',
-      location: '',
-      reminder: '0',
-      repeat: 'monthly',
-      isCompleted: true,
-      isFavorite: false
-    },
-    {
-      id: 4,
-      title: 'פגישת לקוח',
-      description: 'פגישת היכרות עם לקוח פוטניאלי',
-      dueDate: '2024-11-15',
-      dueTime: '11:00',
-      category: 'work',
-      priority: 'high',
-      location: 'משרדי הלקוח',
-      reminder: '30',
-      repeat: 'none',
-      isCompleted: false,
-      isFavorite: false
-    },
-    {
-      id: 5,
-      title: 'אימון כושר',
-      description: 'אימון שבועי',
-      dueDate: '2024-11-16',
-      dueTime: '08:00',
-      category: 'personal',
-      priority: 'medium',
-      location: 'חדר כושר',
-      reminder: '15',
-      repeat: 'weekly',
-      isCompleted: false,
-      isFavorite: true
-    }
-  ]);
-
-  // קטגוריות - עם ערך התחלתי ל-count
-  const [categories, setCategories] = useState<Category[]>([
-    { id: 'all', name: 'הכל', color: 'blue', count: 0 },
-    { id: 'work', name: 'עבודה', color: 'red', count: 0 },
-    { id: 'personal', name: 'אישי', color: 'green', count: 0 },
-    { id: 'study', name: 'לימודים', color: 'yellow', count: 0 },
-    { id: 'family', name: 'משפחה', color: 'purple', count: 0 }
-  ]);
 
   // פריטי תפריט
   const navItems = [
@@ -165,28 +97,21 @@ function App() {
   };
 
   // פונקציות לטיפול במשימות
-  const handleTaskUpdate = (updatedTask: Task) => {
+  const handleTaskUpdate = async (updatedTask: Task) => {
     if (updatedTask.id) {
       // עדכון משימה קיימת
-      setTasks(prevTasks => 
-        prevTasks.map(task => 
-          task.id === updatedTask.id ? updatedTask : task
-        )
-      );
+      await updateTask(updatedTask.id, updatedTask);
     } else {
-      // הוספת משימה חדשה (למקרה של שכפול)
-      setTasks(prevTasks => [...prevTasks, { 
-        ...updatedTask, 
-        id: Math.max(...prevTasks.map(t => t.id ?? 0)) + 1 
-      }]);
+      // הוספת משימה חדשה
+      await createTask(updatedTask);
     }
   };
 
-  const handleTaskDelete = (taskId: number) => {
-    setTasks(prevTasks => prevTasks.filter(task => task.id !== taskId));
+  const handleTaskDelete = (taskId: string) => {
+    deleteTask(taskId);
   };
 
-  const handleTaskEdit = (taskId: number) => {
+  const handleTaskEdit = (taskId: string) => {
     const taskToEdit = tasks.find(t => t.id === taskId);
     if (taskToEdit) {
       setSelectedTaskId(taskId);
@@ -196,10 +121,10 @@ function App() {
   };
 
   // העברת המשימות ל-CalendarView
-  const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [showTaskDetails, setShowTaskDetails] = useState(false);
 
-  const handleTaskClick = (taskId: number) => {
+  const handleTaskClick = (taskId: string) => {
     setSelectedTaskId(taskId);
     setShowTaskDetails(true);
   };
@@ -225,7 +150,7 @@ function App() {
         return false;
       }
       
-      // אם עבנו את ביקת הקטגוריה, בודקים את החיפוש
+      // אם עבנו את ביקת הקטגוריה, בודקי את החיפוש
       return task.title.toLowerCase().includes(searchLower) ||
              task.description.toLowerCase().includes(searchLower) ||
              task.location?.toLowerCase().includes(searchLower);
@@ -289,7 +214,7 @@ function App() {
     }
   };
 
-  // עדכון הרנדור של הדשבורד - החלק הרלוונטי
+  // עדכון הרנדו של הדשבורד - החל הרלוונטי
   const renderDashboard = () => (
     <div className="h-screen flex flex-col bg-gray-100">
       <header className="bg-white shadow-sm relative">
@@ -356,7 +281,7 @@ function App() {
 
           {/* שורה שנייה - פילטרים */}
           <div className="py-3">
-            {/* הודעת סינון */}
+            {/* הוד��ת סינון */}
             {(searchQuery || activeCategory !== 'all') && (
               <div className="mb-3 py-2 px-4 bg-blue-50 rounded-xl text-blue-600 text-sm flex items-center justify-between">
                 <div className="flex items-center gap-2 truncate">
@@ -382,7 +307,7 @@ function App() {
               </div>
             )}
 
-            {/* סרל סינון - עיצוב משופר */}
+            {/* סרל סינון - עיצוב משור */}
             {!searchQuery && (
               <>
                 {/* כותרת הסינון - כל השורה לחיצה */}
@@ -392,7 +317,7 @@ function App() {
                 >
                   <div className="flex items-center gap-2">
                     <Filter className="w-4 h-4" />
-                    <span className="text-sm font-medium">סינון משימות</span>
+                    <span className="text-sm font-medium">סנון משימות</span>
                   </div>
                   
                   <div className="flex items-center gap-1.5 text-sm">
@@ -544,7 +469,7 @@ function App() {
         </div>
       </header>
 
-      {/* רשימת המשימות */}
+      {/* רשימה המשימות */}
       <div className="flex-1 overflow-auto relative">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-4">
           <div className="space-y-3">
@@ -560,6 +485,7 @@ function App() {
                 isMenuOpen={openMenuTaskId === task.id}
                 onMenuToggle={handleMenuToggle}
                 setNotification={setNotification}
+                createTask={createTask}
               />
             ))}
             {getFilteredTasks().length === 0 && (
@@ -579,7 +505,7 @@ function App() {
                       onClick={() => setSearchQuery('')}
                       className="text-blue-600 hover:text-blue-700 text-sm font-medium"
                     >
-                      נקה חיפוש וחזור לתצוגה רגילה
+                      נקה חיפוש וחזור לתצוה רגילה
                     </button>
                   ) : (
                     <button 
@@ -598,7 +524,7 @@ function App() {
     </div>
   );
 
-  // פונקציית עזר להמר עדיפות לטקסט וצבע - נעדכן את הצבעים
+  // פונציית עזר להמר עדיפות לטקסט וצבע - נעדכן את הצבעים
   const getPriorityDetails = (priority: string) => {
     const details = {
       high: { text: 'גבוהה', color: 'text-red-800', bgColor: 'bg-red-100' },
@@ -610,33 +536,43 @@ function App() {
 
   const [showNewCategory, setShowNewCategory] = useState(false);
 
-  // הוספת פונקציה לחישוב מספר המשימו בכל טגוריה
-  const updateCategoryCounts = () => {
-    const newCategories = categories.map(category => ({
+  // עדכון פונקציית updateCategoryCounts
+  const updateCategoryCounts = useCallback(() => {
+    // במקום לקרוא ל-refreshData, נעדכן רק את הספירה המקומית
+    const updatedCategories = categories.map(category => ({
       ...category,
       count: category.id === 'all' 
         ? tasks.length 
         : tasks.filter(task => task.category === category.id).length
     }));
-    
-    setCategories(newCategories);
-  };
+  }, [tasks, categories]);
 
-  // קריאה לפונקציה בכל שינוי של המשימות
+  // עדכון ה-useEffect
+  useEffect(() => {
+    // קריאה ראשונית לנתונים רק כשהקומפוננטה נטענת
+    refreshData();
+  }, []); // ריק - רק בטעינה ראשונית
+
+  // useEffect נפרד לעדכון הספירה
   useEffect(() => {
     updateCategoryCounts();
-  }, [tasks]);
+  }, [tasks, updateCategoryCounts]);
 
-  // עדכון פונקציית השכפול במודל
-  const handleDuplicate = (task: Task) => {
+  // עדכון פונקציית השכפול
+  const handleDuplicate = async (task: Task) => {
+    const { id, ...taskWithoutId } = task;
     const newTask = {
-      ...task,
-      id: undefined,
+      ...taskWithoutId,
       title: `העתק של ${task.title}`
     };
-    handleTaskUpdate(newTask);
-    setShowTaskDetails(false);
-    setNotification({ type: 'success', message: 'המשימה שוכפלה בהצלחה' });
+    
+    try {
+      await createTask(newTask);
+      setShowTaskDetails(false);
+      setNotification({ type: 'success', message: 'המשימה שוכפלה בהצלחה' });
+    } catch (error) {
+      setNotification({ type: 'error', message: 'שגיאה בשכפול המשימה' });
+    }
     setTimeout(() => setNotification(null), 3000);
   };
 
@@ -662,13 +598,13 @@ function App() {
   };
 
   // נוסיף את ה-state למצב התפריט
-  const [openMenuTaskId, setOpenMenuTaskId] = useState<number | null>(null);
+  const [openMenuTaskId, setOpenMenuTaskId] = useState<string | null>(null);
 
   // נוסיף את ה-state להודעות
   const [notification, setNotification] = useState<NotificationType | null>(null);
 
   // נעדכן את פונקציית השכפול
-  const handleMenuToggle = (taskId: number | null) => {
+  const handleMenuToggle = (taskId: string | null) => {
     setOpenMenuTaskId(taskId);
   };
 
@@ -813,30 +749,7 @@ function App() {
             activeCategory={activeCategory}
           />
         )}
-        {currentView === 'settings' && (
-          <SettingsScreen 
-            categories={categories}
-            onAddCategory={(category) => {
-              setCategories(prev => [
-                ...prev,
-                {
-                  id: category.name.toLowerCase().replace(/\s+/g, '-'),
-                  name: category.name,
-                  count: 0,
-                  color: category.color
-                }
-              ]);
-            }}
-            onEditCategory={(id, updates) => {
-              setCategories(prev => prev.map(cat => 
-                cat.id === id ? { ...cat, ...updates } : cat
-              ));
-            }}
-            onDeleteCategory={(id) => {
-              setCategories(prev => prev.filter(cat => cat.id !== id));
-            }}
-          />
-        )}
+        {currentView === 'settings' && <SettingsScreen />}
         {currentView === 'dashboard' && renderDashboard()}
       </div>
 
@@ -855,7 +768,7 @@ function App() {
               <span className="text-xs mt-1">{item.label}</span>
             </button>
           ))}
-          {/* כפתור התנתקות למובייל */}
+          {/* כפתור התנתקות למוביל */}
           <button 
             onClick={async () => {
               try {
@@ -884,20 +797,14 @@ function App() {
           }}
           initialTask={selectedTaskId ? tasks.find(t => t.id === selectedTaskId) : undefined}
           initialDate={initialTaskDate}
-          onSubmit={(updatedTask) => {
+          onSubmit={(taskData) => {
             if (selectedTaskId) {
-              // עדכון משימה קיימת
-              handleTaskUpdate({ ...updatedTask, id: selectedTaskId });
+              updateTask(selectedTaskId, taskData);
             } else {
-              // יצירת משימה חדשה
-              setTasks(prev => [...prev, { 
-                ...updatedTask, 
-                id: Math.max(...prev.map(t => t.id ?? 0)) + 1 
-              }]);
+              createTask(taskData);
             }
             setShowNewTask(false);
             setSelectedTaskId(null);
-            setInitialTaskDate(null);
           }}
           categories={categories}
         />
@@ -961,7 +868,7 @@ function App() {
                   onClick={handleCloseTaskDetails} // שימוש בפונקציה החדשה
                   className="p-2 bg-blue-100 hover:bg-blue-200 text-blue-600 rounded-full transition-colors group"
                   title="סגור חלון"
-                  aria-label="סגו חלון פרטי משימה"
+                  aria-label="סגור חלון פרטי משימה"
                 >
                   <X className="w-5 h-5 group-hover:scale-110 transition-transform" />
                 </button>
@@ -1008,7 +915,7 @@ function App() {
                   }}
                   className="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg flex items-center gap-2 hover:bg-gray-200 transition-colors"
                   title="ערוך משימ"
-                  aria-label="ערוך את פרטי המשימה"
+                  aria-label="ערוך את פרי המשימה"
                 >
                   <Edit className="w-4 h-4" />
                   עריכה
@@ -1057,17 +964,13 @@ function App() {
       {showNewCategory && (
         <NewCategoryModal
           onClose={() => setShowNewCategory(false)}
-          onSubmit={(newCategory) => {
-            setCategories(prev => [
-              ...prev,
-              {
-                id: newCategory.name.toLowerCase().replace(/\s+/g, '-'),
-                name: newCategory.name,
-                count: 0,
-                color: newCategory.color as ColorType
-              }
-            ]);
-            setShowNewCategory(false);
+          onSubmit={async (newCategory) => {
+            try {
+              await createCategory(newCategory);
+              setShowNewCategory(false);
+            } catch (error) {
+              setNotification({ type: 'error', message: 'שגיאה ביצירת קטגוריה' });
+            }
           }}
         />
       )}
