@@ -58,43 +58,64 @@ export const tasksApi = {
 
   // הוספת משימה חדשה
   async createTask(task: Omit<Task, 'id'>): Promise<Task> {
-    console.log('Creating task:', task);
-    const taskDTO = {
-      title: task.title,
-      description: task.description || null,
-      due_date: task.dueDate,
-      due_time: task.dueTime || null,
-      category_id: task.category === 'all' ? null : task.category as string,
-      priority: task.priority,
-      location: task.location || null,
-      reminder: task.reminder ? parseInt(task.reminder) : null,
-      repeat: task.repeat || null,
-      is_completed: task.isCompleted,
-      is_favorite: task.isFavorite
-    };
+    try {
+      console.log('Creating task with data:', task);
+      
+      const { data: { user } } = await supabase.auth.getUser();
+      console.log('Current user:', user);
+      
+      if (!user) {
+        throw new Error('לא נמצא משתמש מחובר');
+      }
 
-    const { data, error } = await supabase
-      .from('tasks')
-      .insert([taskDTO])
-      .select()
-      .single();
+      // המרה מהפורמט של הקליינט לפורמט של הדאטאבייס
+      const taskDTO = {
+        title: task.title,
+        description: task.description || null,
+        due_date: task.dueDate,
+        due_time: task.dueTime || null,
+        category_id: task.category === 'all' ? null : task.category,
+        priority: task.priority,
+        location: task.location || null,
+        reminder: task.reminder ? parseInt(task.reminder) : null,
+        repeat: task.repeat || null,
+        is_completed: task.isCompleted || false,
+        is_favorite: task.isFavorite || false,
+        user_id: user.id
+      };
 
-    if (error) throw error;
+      console.log('Sending taskDTO to server:', taskDTO);
+      const { data, error } = await supabase
+        .from('tasks')
+        .insert([taskDTO])
+        .select()
+        .single();
 
-    return {
-      id: data.id,
-      title: data.title,
-      description: data.description || '',
-      dueDate: data.due_date,
-      dueTime: data.due_time || '',
-      category: data.category_id || 'all',
-      priority: data.priority,
-      location: data.location || '',
-      reminder: data.reminder?.toString() || '0',
-      repeat: data.repeat || 'none',
-      isCompleted: data.is_completed,
-      isFavorite: data.is_favorite
-    };
+      if (error) {
+        console.error('Error creating task:', error);
+        throw new Error('שגיאה ביצירת המשימה');
+      }
+
+      console.log('Task created successfully:', data);
+      // המרה בחזרה לפורמט של הקליינט
+      return {
+        id: data.id,
+        title: data.title,
+        description: data.description || '',
+        dueDate: data.due_date,
+        dueTime: data.due_time || '',
+        category: data.category_id || 'all',
+        priority: data.priority,
+        location: data.location || '',
+        reminder: data.reminder?.toString() || '0',
+        repeat: data.repeat || 'none',
+        isCompleted: data.is_completed || false,
+        isFavorite: data.is_favorite || false
+      };
+    } catch (error) {
+      console.error('Failed to create task:', error);
+      throw error;
+    }
   },
 
   // עדכון משימה קיימת

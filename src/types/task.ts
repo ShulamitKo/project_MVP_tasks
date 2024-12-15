@@ -15,4 +15,6 @@ export interface Task {
   repeat: TaskRepeat;
   isCompleted: boolean;
   isFavorite: boolean;
-} 
+}
+
+export type NewTask = Omit<Task, 'id'>; 

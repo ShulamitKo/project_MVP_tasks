@@ -9,7 +9,7 @@ import {
   ChevronDown,
   Check
 } from 'lucide-react';
-import { Task, TaskPriority, TaskCategory, TaskRepeat } from '../types/task';
+import { Task, TaskPriority, TaskCategory, TaskRepeat, NewTask } from '../types/task';
 
 
 interface Category {
@@ -21,16 +21,17 @@ interface Category {
 
 interface NewTaskFormProps {
   onClose: () => void;
-  onSubmit: (task: Task) => void;
+  onSubmit: (task: NewTask) => Promise<void>;
   initialTask?: Task;
   initialDate?: Date | null;
   categories: Category[];
 }
 
 const NewTaskForm: React.FC<NewTaskFormProps> = ({ onClose, onSubmit, initialTask, initialDate, categories }) => {
-  const [task, setTask] = useState<Task>(() => {
+  const [task, setTask] = useState<NewTask>(() => {
     if (initialTask) {
-      return initialTask;
+      const { id, ...taskWithoutId } = initialTask;
+      return taskWithoutId;
     }
 
     const defaultDate = initialDate || new Date();
@@ -106,17 +107,32 @@ const NewTaskForm: React.FC<NewTaskFormProps> = ({ onClose, onSubmit, initialTas
     return true;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!validateForm()) {
-      return;
+    try {
+      const taskData = {
+        title: task.title,
+        description: task.description,
+        dueDate: task.dueDate,
+        dueTime: task.dueTime,
+        category: task.category,
+        priority: task.priority,
+        location: task.location,
+        reminder: task.reminder,
+        repeat: task.repeat,
+        isCompleted: false,
+        isFavorite: false
+      };
+      console.log('Submitting task data:', taskData);
+      await onSubmit(taskData);
+      onClose();
+    } catch (error) {
+      console.error('Error submitting task:', error);
+      setNotification({
+        message: error instanceof Error ? error.message : 'שגיאה בשמירת המשימה',
+        type: 'error'
+      });
     }
-
-    if (onSubmit) {
-      onSubmit(task);
-    }
-    onClose();
   };
 
   const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {

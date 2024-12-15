@@ -62,7 +62,8 @@ function App() {
     createCategory,
     updateCategory,
     deleteCategory,
-    refreshData
+    refreshData,
+    showNotification
   } = useData();
   const navigate = useNavigate();
   const { isDarkMode, toggleDarkMode } = useTheme();
@@ -281,7 +282,7 @@ function App() {
 
           {/* שורה שנייה - פילטרים */}
           <div className="py-3">
-            {/* הוד��ת סינון */}
+            {/* הודת סינון */}
             {(searchQuery || activeCategory !== 'all') && (
               <div className="mb-3 py-2 px-4 bg-blue-50 rounded-xl text-blue-600 text-sm flex items-center justify-between">
                 <div className="flex items-center gap-2 truncate">
@@ -339,7 +340,7 @@ function App() {
                 {/* פילטרים - מוסתרים כברירת מחדל במובייל */}
                 <div className={`${showFilters ? 'block' : 'hidden'} md:block`}>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-4">
-                    {/* סינון לפי קטגוריה - חדש */}
+                    {/* סינ��ן לפי קטגוריה - חדש */}
                     <div className="bg-white p-2 rounded-xl shadow-sm border border-gray-100 md:hidden">
                       <div className="text-xs text-gray-500 font-medium mb-2 px-1 flex items-center gap-1.5">
                         <ListTodo className="w-3.5 h-3.5" />
@@ -538,7 +539,7 @@ function App() {
 
   // עדכון פונקציית updateCategoryCounts
   const updateCategoryCounts = useCallback(() => {
-    // במקום לקרוא ל-refreshData, נעדכן רק את הספירה המקומית
+    // במקום ��קרוא ל-refreshData, נעדכן רק את הספירה המקומית
     const updatedCategories = categories.map(category => ({
       ...category,
       count: category.id === 'all' 
@@ -797,14 +798,19 @@ function App() {
           }}
           initialTask={selectedTaskId ? tasks.find(t => t.id === selectedTaskId) : undefined}
           initialDate={initialTaskDate}
-          onSubmit={(taskData) => {
-            if (selectedTaskId) {
-              updateTask(selectedTaskId, taskData);
-            } else {
-              createTask(taskData);
+          onSubmit={async (taskData) => {
+            try {
+              if (selectedTaskId) {
+                await updateTask(selectedTaskId, taskData);
+              } else {
+                await createTask(taskData);
+              }
+              setShowNewTask(false);
+              setSelectedTaskId(null);
+              showNotification('success', selectedTaskId ? 'המשימה עודכנה בהצלחה' : 'המשימה נוספה בהצלחה');
+            } catch (error) {
+              showNotification('error', 'שגיאה בשמירת המשימה');
             }
-            setShowNewTask(false);
-            setSelectedTaskId(null);
           }}
           categories={categories}
         />

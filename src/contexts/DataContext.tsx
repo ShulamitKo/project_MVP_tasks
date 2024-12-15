@@ -84,9 +84,71 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     isLoading,
     error,
     refreshData,
-    createTask: tasksApi.createTask,
-    updateTask: tasksApi.updateTask,
-    deleteTask: tasksApi.deleteTask,
+    createTask: async (task: Omit<Task, 'id'>) => {
+      // יצירת ID זמני
+      const tempId = crypto.randomUUID();
+      
+      try {
+        // עדכון אופטימי של ה-state
+        const tempTask = { ...task, id: tempId };
+        setTasks(prev => [...prev, tempTask]);
+        
+        // שליחה לשרת
+        const result = await tasksApi.createTask(task);
+        
+        // עדכון ה-state עם המשימה האמיתית
+        setTasks(prev => prev.map(t => t.id === tempId ? result : t));
+        
+        showNotification('success', 'המשימה נוספה בהצלחה');
+        return result;
+      } catch (error) {
+        // במקרה של שגיאה - מחיקת המשימה הזמנית
+        setTasks(prev => prev.filter(t => t.id !== tempId));
+        const message = error instanceof Error ? error.message : 'שגיאה ביצירת המשימה';
+        showNotification('error', message);
+        throw error;
+      }
+    },
+    updateTask: async (id: string, updates: Partial<Task>) => {
+      try {
+        // עדכון אופטימי
+        setTasks(prev => prev.map(task => 
+          task.id === id ? { ...task, ...updates } : task
+        ));
+        
+        // שליחה לשרת
+        const result = await tasksApi.updateTask(id, updates);
+        showNotification('success', 'המשימה עודכנה בהצלחה');
+        return result;
+      } catch (error) {
+        // במקרה של שגיאה - החזרת המצב הקודם
+        await refreshData();
+        const message = error instanceof Error ? error.message : 'שגיאה בעדכון המשימה';
+        showNotification('error', message);
+        throw error;
+      }
+    },
+    deleteTask: async (id: string) => {
+      // שמירת המשימה למקרה של שגיאה
+      const taskToDelete = tasks.find(t => t.id === id);
+      
+      try {
+        // מחיקה אופטימית
+        setTasks(prev => prev.filter(t => t.id !== id));
+        
+        // מחיקה מהשרת
+        await tasksApi.deleteTask(id);
+        showNotification('success', 'המשימה נמחקה בהצלחה');
+      } catch (error) {
+        // במקרה של שגיאה - החזרת המשימה
+        if (taskToDelete) {
+          setTasks(prev => [...prev, taskToDelete]);
+        }
+        const message = error instanceof Error ? error.message : 'שגיאה במחיקת המשימה';
+        showNotification('error', message);
+        throw error;
+      }
+    },
     createCategory: async (category: Omit<Category, 'id' | 'count'>) => {
       try {
         const result = await categoriesApi.createCategory(category);
@@ -129,7 +191,6 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   return (
     <DataContext.Provider value={contextValue}>
       {children}
-      {/* הודעת הצלחה/שגיאה */}
       {notification && (
         <div className={`fixed bottom-4 left-1/2 transform -translate-x-1/2 
           px-4 py-2 rounded-lg shadow-lg z-[100] flex items-center gap-2
