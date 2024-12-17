@@ -21,12 +21,28 @@ export const SignUpForm = () => {
       const { error: signUpError } = await signUp(email, password);
       
       if (signUpError) {
+        console.error('SignUp error:', signUpError);
+        
         switch (signUpError.message) {
           case 'User already registered':
             setError('כתובת האימייל כבר רשומה במערכת');
             break;
+          case 'Password should be at least 6 characters':
+            setError('הסיסמה חייבת להכיל לפחות 6 תווים');
+            break;
+          case 'Unable to validate email address':
+            setError('כתובת האימייל אינה תקינה');
+            break;
+          case 'Rate limit exceeded':
+          case 'email rate limit exceeded':
+            setError('נשלחו יותר מדי בקשות הרשמה לכתובת זו. אנא המתן מספר דקות ונסה שוב');
+            break;
           default:
-            setError('שגיאה בהרשמה. אנא נסו שוב מאוחר יותר');
+            console.error('Unexpected signup error:', {
+              message: signUpError.message,
+              details: signUpError
+            });
+            setError('שגיאה בהרשמה. אנא נסה שוב מאוחר יותר');
         }
         return;
       }
@@ -34,6 +50,7 @@ export const SignUpForm = () => {
       // הרשמה הצליחה
       setIsSuccess(true);
     } catch (err) {
+      console.error('Unexpected error during signup:', err);
       setError('שגיאה לא צפויה. אנא נסו שוב');
     } finally {
       setIsLoading(false);
@@ -125,7 +142,7 @@ export const SignUpForm = () => {
                 isLoading ? 'opacity-50 cursor-not-allowed' : ''
               }`}
             >
-              {isLoading ? 'מבצע הרשמה...' : 'הרשמה'}
+              {isLoading ? '��בצע הרשמה...' : 'הרשמה'}
             </button>
           </div>
         </form>

@@ -1,23 +1,18 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
-import { ColorType } from '../../types/category';
-import { Category } from '../../types/category';
-
-interface CategoryFormData {
-  name: string;
-  color: ColorType;
-}
+import { ColorType, Category, CategoryFormData } from '../../types/category';
 
 interface NewCategoryModalProps {
   onClose: () => void;
-  onSubmit: (formData: { name: string; color: ColorType }) => Promise<void>;
+  onSubmit: (formData: CategoryFormData) => Promise<void>;
   initialCategory?: Category;
+  isLoading?: boolean;
 }
 
-const NewCategoryModal: React.FC<NewCategoryModalProps> = ({ onClose, onSubmit, initialCategory }) => {
+const NewCategoryModal: React.FC<NewCategoryModalProps> = ({ onClose, onSubmit, initialCategory, isLoading }) => {
   const [name, setName] = useState(initialCategory?.name || '');
   const [selectedColor, setSelectedColor] = useState<ColorType>(initialCategory?.color || 'blue');
-  const [error, setError] = useState<string | null>(null);
+  const [error] = useState<string | null>(null);
 
   const colors: { id: ColorType; label: string; class: string }[] = [
     { id: 'blue', label: 'כחול', class: 'bg-blue-500' },
@@ -34,18 +29,18 @@ const NewCategoryModal: React.FC<NewCategoryModalProps> = ({ onClose, onSubmit, 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (isLoading) return;
+    
     try {
+      onClose();
+      
       await onSubmit({
         name,
         color: selectedColor
       });
-      onClose();
     } catch (error) {
-      if (error instanceof Error) {
-        setError(error.message);
-      } else {
-        setError('שגיאה לא צפויה. אנא נסה שוב.');
-      }
+      console.error('Failed to create category:', error);
     }
   };
 
@@ -98,9 +93,17 @@ const NewCategoryModal: React.FC<NewCategoryModalProps> = ({ onClose, onSubmit, 
           <div className="flex gap-2 pt-4">
             <button
               type="submit"
-              className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+              className={`flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600
+                flex items-center justify-center gap-2`}
             >
-              {initialCategory ? 'שמור שינויים' : 'הוספה'}
+              {isLoading ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <span>מעבד...</span>
+                </>
+              ) : (
+                initialCategory ? 'שמור שינויים' : 'הוספה'
+              )}
             </button>
             <button
               type="button"

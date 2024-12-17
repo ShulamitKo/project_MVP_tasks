@@ -27,6 +27,15 @@ interface NewTaskFormProps {
   categories: Category[];
 }
 
+const ErrorMessage: React.FC<{ message: string }> = ({ message }) => (
+  <div className="mt-1.5 flex items-center gap-1.5 text-sm">
+    <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+    <p className="font-medium text-red-600 dark:text-red-500">
+      {message}
+    </p>
+  </div>
+);
+
 const NewTaskForm: React.FC<NewTaskFormProps> = ({ onClose, onSubmit, initialTask, initialDate, categories }) => {
   const [task, setTask] = useState<NewTask>(() => {
     if (initialTask) {
@@ -47,7 +56,7 @@ const NewTaskForm: React.FC<NewTaskFormProps> = ({ onClose, onSubmit, initialTas
       description: '',
       dueDate: formattedDate,
       dueTime: formattedTime,
-      category: '' as TaskCategory,
+      category: '',
       priority: '' as TaskPriority,
       location: '',
       reminder: '30',
@@ -82,24 +91,24 @@ const NewTaskForm: React.FC<NewTaskFormProps> = ({ onClose, onSubmit, initialTas
   const validateForm = () => {
     if (!task.title.trim()) {
       setNotification({
-        message: 'נא להזין כותרת למשימה',
-        type: 'error'
+        type: 'error',
+        message: 'נא להזין כותרת למשימה'
       });
       return false;
     }
     
     if (!task.category) {
       setNotification({
-        message: 'נא לבחור קטגוריה למשימה',
-        type: 'error'
+        type: 'error',
+        message: 'נא לבחור קטגוריה למשימה'
       });
       return false;
     }
     
     if (!task.priority) {
       setNotification({
-        message: 'נא לבחור עדיפות למשימה',
-        type: 'error'
+        type: 'error',
+        message: 'נא לבחור עדיפות למשימה'
       });
       return false;
     }
@@ -109,34 +118,21 @@ const NewTaskForm: React.FC<NewTaskFormProps> = ({ onClose, onSubmit, initialTas
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+
     try {
-      const taskData = {
-        title: task.title,
-        description: task.description,
-        dueDate: task.dueDate,
-        dueTime: task.dueTime,
-        category: task.category,
-        priority: task.priority,
-        location: task.location,
-        reminder: task.reminder,
-        repeat: task.repeat,
-        isCompleted: false,
-        isFavorite: false
-      };
-      console.log('Submitting task data:', taskData);
-      await onSubmit(taskData);
+      await onSubmit(task);
       onClose();
     } catch (error) {
-      console.error('Error submitting task:', error);
+      console.error('Failed to create task:', error);
       setNotification({
-        message: error instanceof Error ? error.message : 'שגיאה בשמירת המשימה',
-        type: 'error'
+        type: 'error',
+        message: error instanceof Error ? error.message : 'שגיאה ביצירת המשימה'
       });
     }
-  };
-
-  const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setTask({ ...task, category: e.target.value as TaskCategory });
   };
 
   const handleRepeatChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -199,11 +195,9 @@ const NewTaskForm: React.FC<NewTaskFormProps> = ({ onClose, onSubmit, initialTas
                   }}
                   placeholder="הכנס כותרת למשימה"
                   className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500
-                    ${errors.title ? 'border-red-500' : 'border-gray-300'}`}
+                    ${errors.title ? 'border-red-500 ring-2 ring-red-200' : 'border-gray-300'}`}
                 />
-                {errors.title && (
-                  <p className="mt-1 text-sm text-red-500">{errors.title}</p>
-                )}
+                {errors.title && <ErrorMessage message={errors.title} />}
               </div>
 
               <div>
@@ -256,27 +250,25 @@ const NewTaskForm: React.FC<NewTaskFormProps> = ({ onClose, onSubmit, initialTas
                 <select
                   value={task.category}
                   onChange={(e) => {
-                    handleCategoryChange(e);
+                    setTask({ ...task, category: e.target.value as TaskCategory });
                     if (errors.category) {
                       setErrors(prev => ({ ...prev, category: undefined }));
                     }
                   }}
                   className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white dark:hover:bg-gray-700
-                    ${errors.category ? 'border-red-500' : 'border-gray-300'}`}
+                    ${errors.category ? 'border-red-500 ring-2 ring-red-200' : 'border-gray-300'}`}
                 >
                   <option value="">בחר קטגוריה</option>
                   {categories
                     .filter(cat => cat.id !== 'all')
                     .map(category => (
-                      <option key={category.id} value={category.id as TaskCategory}>
+                      <option key={category.id} value={category.id}>
                         {category.name}
                       </option>
                     ))
                   }
                 </select>
-                {errors.category && (
-                  <p className="mt-1 text-sm text-red-500">{errors.category}</p>
-                )}
+                {errors.category && <ErrorMessage message={errors.category} />}
               </div>
 
               <div>
@@ -334,9 +326,7 @@ const NewTaskForm: React.FC<NewTaskFormProps> = ({ onClose, onSubmit, initialTas
                     נמוכה
                   </button>
                 </div>
-                {errors.priority && (
-                  <p className="mt-1 text-sm text-red-500">{errors.priority}</p>
-                )}
+                {errors.priority && <ErrorMessage message={errors.priority} />}
               </div>
             </div>
 
@@ -421,7 +411,7 @@ const NewTaskForm: React.FC<NewTaskFormProps> = ({ onClose, onSubmit, initialTas
           </button>
         </div>
 
-        {/* הודעת שגיאה */}
+        {/* הודעת שגיאה/הצלחה */}
         {notification && (
           <div className={`fixed bottom-20 md:bottom-6 left-1/2 transform -translate-x-1/2 
             px-4 py-2 rounded-lg shadow-lg z-[100] flex items-center gap-2

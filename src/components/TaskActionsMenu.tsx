@@ -128,10 +128,7 @@ const TaskActionsMenu: React.FC<TaskActionsMenuProps> = ({
           </span>
         </button>
         <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onDuplicate(task);
-          }}
+          onClick={handleDuplicate}
           className="action-item w-full text-right px-4 py-2"
         >
           <span className="flex items-center gap-2">

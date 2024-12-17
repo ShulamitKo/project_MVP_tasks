@@ -55,11 +55,6 @@ export const categoriesApi = {
     try {
       console.log('Creating category:', category);
       
-      // בדיקת חיבור לאינטרנט
-      if (!navigator.onLine) {
-        throw new Error('אין חיבור לאינטרנט. אנא בדוק את החיבור ונסה שוב.');
-      }
-      
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
@@ -67,29 +62,24 @@ export const categoriesApi = {
       }
 
       // בדיקה אם כבר קיימת קטגוריה עם אותו שם למשתמש זה
-      const { data: existingCategories, error: checkError } = await supabase
+      const { data: existingCategories } = await supabase
         .from('categories')
         .select('*')
         .eq('user_id', user.id)
         .eq('name', category.name);
 
-      if (checkError) {
-        console.error('Error checking existing category:', checkError);
-        throw new Error('שגיאה בבדיקת קטגוריות קיימות');
-      }
-
       if (existingCategories && existingCategories.length > 0) {
         throw new Error('קטגוריה בשם זה כבר קיימת');
       }
 
-      // יצירת הקטגוריה החדשה
+      // יצירת הקטגוריה החדשה - תיקון הקוד החסר
       const { data, error } = await supabase
         .from('categories')
-        .insert({
+        .insert([{
           name: category.name,
           color: category.color,
           user_id: user.id
-        })
+        }])
         .select()
         .single();
 
@@ -98,14 +88,12 @@ export const categoriesApi = {
         throw new Error('שגיאה ביצירת הקטגוריה');
       }
 
-      console.log('Category created:', data);
       return {
         id: data.id,
         name: data.name,
         color: data.color,
         count: 0
       };
-
     } catch (error) {
       console.error('Failed to create category:', error);
       if (error instanceof Error) {
@@ -141,7 +129,7 @@ export const categoriesApi = {
       }
     }
 
-    // אם זו קטגוריית 'הכל', לא מבצעים עדכון בדאטאבייס
+    // אם זו קטגוריית 'הכל', לא מ��צעים עדכון בדאטאבייס
     if (id === 'all') {
       return {
         id: 'all',

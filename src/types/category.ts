@@ -7,7 +7,7 @@ export interface Category {
   count: number;
 }
 
-export interface NewCategory {
+export interface CategoryFormData {
   name: string;
   color: ColorType;
 } 

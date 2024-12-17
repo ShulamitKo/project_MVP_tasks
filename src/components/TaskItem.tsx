@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { 
   CheckCircle,
   Clock,
@@ -9,6 +9,7 @@ import {
 import { Task } from '../types/task';
 import TaskActionsMenu from './TaskActionsMenu';
 import { ColorType, Category } from '../types/category';
+import { useData } from '../contexts/DataContext';
 
 interface NotificationType {
   message: string;
@@ -30,7 +31,6 @@ interface TaskItemProps {
 
 const TaskItem: React.FC<TaskItemProps> = ({
   task,
-  onTaskUpdate,
   onTaskDelete,
   onTaskEdit,
   onTaskClick,
@@ -40,12 +40,24 @@ const TaskItem: React.FC<TaskItemProps> = ({
   setNotification,
   createTask
 }) => {
-  const handleComplete = () => {
-    onTaskUpdate({ ...task, isCompleted: !task.isCompleted });
+  const { toggleTaskCompletion, toggleTaskFavorite } = useData();
+
+  const handleToggleComplete = async (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    try {
+      await toggleTaskCompletion(task.id);
+    } catch (error) {
+      console.error('Failed to toggle task completion:', error);
+    }
   };
 
-  const handleToggleFavorite = () => {
-    onTaskUpdate({ ...task, isFavorite: !task.isFavorite });
+  const handleToggleFavorite = async (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    try {
+      await toggleTaskFavorite(task.id);
+    } catch (error) {
+      console.error('Failed to toggle task favorite:', error);
+    }
   };
 
   const handleDuplicate = async (task: Task) => {
@@ -129,7 +141,7 @@ const TaskItem: React.FC<TaskItemProps> = ({
           <button 
             onClick={(e) => {
               handleActionClick(e);
-              handleComplete();
+              handleToggleComplete(e);
             }}
             className={`p-2 rounded-full transition-colors
               ${task.isCompleted 
@@ -174,7 +186,7 @@ const TaskItem: React.FC<TaskItemProps> = ({
           <button
             onClick={(e) => {
               handleActionClick(e);
-              handleToggleFavorite();
+              handleToggleFavorite(e);
             }}
             className={`p-2 rounded-full transition-colors
               ${task.isFavorite 

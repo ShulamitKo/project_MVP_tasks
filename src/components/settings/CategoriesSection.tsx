@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Tag, Edit, Trash2, Plus } from 'lucide-react';
+import { Tag, Edit, Trash2, Plus, AlertCircle } from 'lucide-react';
 import NewCategoryModal from '../categories/NewCategoryModal';
 import { Category, ColorType } from '../../types/category';
 import { useData } from '../../contexts/DataContext';
@@ -13,15 +13,11 @@ type CategoryFormData = {
   color: ColorType;
 };
 
-interface NotificationType {
-  type: 'success' | 'error';
-  message: string;
-}
-
 const CategoriesSection: React.FC<CategoriesSectionProps> = ({ categories }) => {
-  const { createCategory, updateCategory, deleteCategory, refreshData } = useData();
+  const { createCategory, updateCategory, deleteCategory, showNotification } = useData();
   const [showNewCategory, setShowNewCategory] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [isLoading, setIsLoading] = useState<string | null>(null);
 
   const getColorClass = (color: ColorType) => {
     const colors: Record<ColorType, string> = {
@@ -42,29 +38,47 @@ const CategoriesSection: React.FC<CategoriesSectionProps> = ({ categories }) => 
   // הוספת קטגוריה חדשה
   const handleAddCategory = async (formData: CategoryFormData) => {
     try {
+      setIsLoading('add');
       await createCategory(formData);
       setShowNewCategory(false);
     } catch (error) {
       console.error('Failed to add category:', error);
+    } finally {
+      setIsLoading(null);
     }
   };
 
   // עדכון קטגוריה
   const handleEditCategory = async (id: string, formData: CategoryFormData) => {
     try {
+      setIsLoading('edit');
       await updateCategory(id, formData);
       setEditingCategory(null);
     } catch (error) {
       console.error('Failed to update category:', error);
+    } finally {
+      setIsLoading(null);
     }
   };
 
   // מחיקת קטגוריה
-  const handleDeleteCategory = async (categoryId: string) => {
-    try {
-      await deleteCategory(categoryId);
-    } catch (error) {
-      console.error('Failed to delete category:', error);
+  const handleDeleteCategory = async (category: Category) => {
+    if (category.count > 0) {
+      showNotification('error', 'לא ניתן למחוק קטגוריה שיש בה משימות פעילות');
+      return;
+    }
+
+    if (confirm('האם אתה בטוח שברצונך למחוק קטגוריה זו?')) {
+      try {
+        setIsLoading(category.id);
+        await deleteCategory(category.id);
+        showNotification('success', 'הקטגוריה נמחקה בהצלחה');
+      } catch (error) {
+        console.error('Failed to delete category:', error);
+        showNotification('error', 'שגיאה במחיקת הקטגוריה');
+      } finally {
+        setIsLoading(null);
+      }
     }
   };
 
@@ -92,21 +106,29 @@ const CategoriesSection: React.FC<CategoriesSectionProps> = ({ categories }) => 
                 <div className="flex items-center gap-2">
                   <button 
                     onClick={() => setEditingCategory(category)}
-                    className="p-2 hover:bg-gray-200 rounded-lg text-gray-600"
+                    disabled={isLoading !== null}
+                    className="p-2 hover:bg-gray-200 rounded-lg text-gray-600 disabled:opacity-50"
                   >
                     <Edit className="w-4 h-4" />
                   </button>
                   <button 
-                    onClick={() => {
-                      if (category.count === 0 && confirm('האם אתה בטוח שברצונך למחוק קטגוריה זו?')) {
-                        handleDeleteCategory(category.id);
-                      } else if (category.count > 0) {
-                        console.error('לא ניתן למחוק קטגוריה שיש בה משימות');
-                      }
-                    }}
-                    className="p-2 hover:bg-red-100 rounded-lg text-red-600"
+                    onClick={() => handleDeleteCategory(category)}
+                    disabled={isLoading !== null || category.count > 0}
+                    title={category.count > 0 ? 'לא ניתן למחוק קטגוריה שיש בה משימות' : 'מחק קטגוריה'}
+                    className={`p-2 rounded-lg disabled:opacity-50 relative
+                      ${category.count > 0 
+                        ? 'text-gray-400 hover:bg-gray-100 cursor-not-allowed' 
+                        : 'text-red-600 hover:bg-red-100'}`}
                   >
-                    <Trash2 className="w-4 h-4" />
+                    {isLoading === category.id ? (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
+                      </div>
+                    ) : category.count > 0 ? (
+                      <AlertCircle className="w-4 h-4" />
+                    ) : (
+                      <Trash2 className="w-4 h-4" />
+                    )}
                   </button>
                 </div>
               </div>
@@ -114,7 +136,8 @@ const CategoriesSection: React.FC<CategoriesSectionProps> = ({ categories }) => 
 
           <button
             onClick={() => setShowNewCategory(true)}
-            className="w-full mt-2 px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 hover:border-blue-500 hover:text-blue-500 transition-colors flex items-center justify-center gap-2"
+            disabled={isLoading !== null}
+            className="w-full mt-2 px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 hover:border-blue-500 hover:text-blue-500 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
           >
             <Plus className="w-4 h-4" />
             הוספת קטגוריה חדשה
@@ -126,8 +149,10 @@ const CategoriesSection: React.FC<CategoriesSectionProps> = ({ categories }) => 
       {(showNewCategory || editingCategory) && (
         <NewCategoryModal
           onClose={() => {
-            setShowNewCategory(false);
-            setEditingCategory(null);
+            if (!isLoading) {
+              setShowNewCategory(false);
+              setEditingCategory(null);
+            }
           }}
           onSubmit={async (formData) => {
             if (editingCategory) {
@@ -137,6 +162,7 @@ const CategoriesSection: React.FC<CategoriesSectionProps> = ({ categories }) => 
             }
           }}
           initialCategory={editingCategory || undefined}
+          isLoading={isLoading === 'add' || isLoading === 'edit'}
         />
       )}
     </section>

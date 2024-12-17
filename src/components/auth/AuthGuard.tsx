@@ -1,4 +1,4 @@
-import { ReactNode, useState } from 'react';
+import { ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { AlertCircle } from 'lucide-react';
@@ -10,7 +10,7 @@ interface AuthGuardProps {
 export const AuthGuard = ({ children }: AuthGuardProps) => {
   const { user, loading } = useAuth();
   const location = useLocation();
-  const [error, setError] = useState<string | null>(null);
+  const error = null;
 
   console.log('AuthGuard - user:', user);
   console.log('AuthGuard - loading:', loading);

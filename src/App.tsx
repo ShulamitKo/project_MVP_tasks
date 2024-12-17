@@ -31,7 +31,7 @@ import SettingsScreen from './components/SettingsScreen';
 import TaskItem from './components/TaskItem';
 import { Task } from './types/task';
 import NewCategoryModal from './components/categories/NewCategoryModal';
-import { Category, ColorType } from './types/category';
+import { ColorType } from './types/category';
 import { useTheme } from './contexts/ThemeContext';
 import { useAuth } from './contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -55,15 +55,12 @@ function App() {
   const { 
     tasks, 
     categories, 
-    isLoading,
     createTask,
     updateTask,
     deleteTask,
     createCategory,
-    updateCategory,
-    deleteCategory,
-    refreshData,
-    showNotification
+    showNotification,
+    setCategories
   } = useData();
   const navigate = useNavigate();
   const { isDarkMode, toggleDarkMode } = useTheme();
@@ -340,7 +337,7 @@ function App() {
                 {/* פילטרים - מוסתרים כברירת מחדל במובייל */}
                 <div className={`${showFilters ? 'block' : 'hidden'} md:block`}>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-4">
-                    {/* סינ��ן לפי קטגוריה - חדש */}
+                    {/* סינון לפי קטגוריה - חדש */}
                     <div className="bg-white p-2 rounded-xl shadow-sm border border-gray-100 md:hidden">
                       <div className="text-xs text-gray-500 font-medium mb-2 px-1 flex items-center gap-1.5">
                         <ListTodo className="w-3.5 h-3.5" />
@@ -539,24 +536,24 @@ function App() {
 
   // עדכון פונקציית updateCategoryCounts
   const updateCategoryCounts = useCallback(() => {
-    // במקום ��קרוא ל-refreshData, נעדכן רק את הספירה המקומית
-    const updatedCategories = categories.map(category => ({
+    const newCounts = categories.map(category => ({
       ...category,
       count: category.id === 'all' 
         ? tasks.length 
         : tasks.filter(task => task.category === category.id).length
     }));
+
+    // עדכון רק ב-UI, בלי לשלוח לשרת
+    setCategories(newCounts);
   }, [tasks, categories]);
 
   // עדכון ה-useEffect
   useEffect(() => {
-    // קריאה ראשונית לנתונים רק כשהקומפוננטה נטענת
-    refreshData();
-  }, []); // ריק - רק בטעינה ראשונית
+    const timeoutId = setTimeout(() => {
+      updateCategoryCounts();
+    }, 1000);
 
-  // useEffect נפרד לעדכון הספירה
-  useEffect(() => {
-    updateCategoryCounts();
+    return () => clearTimeout(timeoutId);
   }, [tasks, updateCategoryCounts]);
 
   // עדכון פונקציית השכפול
@@ -577,7 +574,7 @@ function App() {
     setTimeout(() => setNotification(null), 3000);
   };
 
-  // עדכון הפונקציה לסגירת מודל פרטי משימה
+  // עדכון הפונקציה לסגירת מודל פרי משימה
   const handleCloseTaskDetails = () => {
     setShowTaskDetails(false);
     setSelectedTaskId(null);
@@ -598,7 +595,7 @@ function App() {
     setShowNewTask(true);
   };
 
-  // נוסיף את ה-state למצב התפריט
+  // ווסיף את ה-state למצב התפריט
   const [openMenuTaskId, setOpenMenuTaskId] = useState<string | null>(null);
 
   // נוסיף את ה-state להודעות
@@ -653,30 +650,29 @@ function App() {
 
         {/* Categories */}
         <div className="space-y-1">
-          {categories.map((category) => (
+          {categories.map(category => (
             <button
               key={category.id}
               onClick={() => setActiveCategory(category.id)}
-              title={!isSidebarOpen ? `${category.name} (${category.count})` : undefined}
-              className={`w-full px-3 py-2 rounded-lg text-right flex items-center transition-all ${
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition-colors ${
                 activeCategory === category.id 
-                  ? 'bg-gray-100 font-medium'
-                  : 'hover:bg-gray-50'
+                  ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400'
+                  : 'text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800/50'
               }`}
             >
+              <div className="flex items-center gap-2">
               <span className={`w-2 h-2 rounded-full ${getColorClass(category.color)}`} />
-              {isSidebarOpen && (
-                <>
-                  <span className="mr-3 text-gray-700">{category.name}</span>
-                  <span className={`mr-auto text-sm ${
+                <span className="font-medium">{category.name}</span>
+              </div>
+              
+              {/* מספר המשימות */}
+              <span className={`text-sm ${
                     activeCategory === category.id 
-                      ? 'text-blue-600'
-                      : 'text-gray-400'
+                  ? 'text-blue-500 dark:text-blue-400'
+                  : 'text-gray-400 dark:text-gray-500'
                   }`}>
                     {category.count}
                   </span>
-                </>
-              )}
             </button>
           ))}
           <button 
@@ -725,7 +721,12 @@ function App() {
     }
   };
 
-  console.log('App rendered, user:', user);
+  // הדפסה רק בטעינה הראשונית של הקומפוננטה
+  useEffect(() => {
+    if (user) {
+      console.log('User authenticated:', user.email);
+    }
+  }, [user?.id]); // תלוי רק ב-ID של המשתמש
 
   return (
     <div className="h-screen flex bg-gray-50 text-right" dir="rtl">
@@ -794,7 +795,7 @@ function App() {
           onClose={() => {
             setShowNewTask(false);
             setSelectedTaskId(null);
-            setInitialTaskDate(null);
+      setInitialTaskDate(null);
           }}
           initialTask={selectedTaskId ? tasks.find(t => t.id === selectedTaskId) : undefined}
           initialDate={initialTaskDate}
@@ -802,7 +803,7 @@ function App() {
             try {
               if (selectedTaskId) {
                 await updateTask(selectedTaskId, taskData);
-              } else {
+    } else {
                 await createTask(taskData);
               }
               setShowNewTask(false);
@@ -916,7 +917,7 @@ function App() {
               <div className="flex gap-2 flex-wrap">
                 <button 
                   onClick={() => {
-                    setShowNewTask(true);
+    setShowNewTask(true);
                     setShowTaskDetails(false);
                   }}
                   className="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg flex items-center gap-2 hover:bg-gray-200 transition-colors"
@@ -957,7 +958,7 @@ function App() {
               <button
                 onClick={handleCloseTaskDetails} // שימוש בפונקציה החדשה
                 className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                title="סגור חלון"
+                title="סגור ח��ון"
                 aria-label="סגור חלון פרטי משימה"
               >
                 סגירה
