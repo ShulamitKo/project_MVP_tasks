@@ -1,57 +1,124 @@
-import React, { useState, useRef, DragEvent } from 'react';
+import React, { useState, useRef, DragEvent, useEffect } from 'react';
 import { User, Mail, Camera, Edit2, X } from 'lucide-react';
-
-interface ProfileData {
-  name: string;
-  email: string;
-  avatar?: string;
-}
+import { useAuth } from '../../contexts/AuthContext';
+import { supabase } from '../../backend/supabase/config';
+import { UserProfile } from '../../types/user';
 
 const ProfileSection: React.FC = () => {
+  const { user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
-  const [profile, setProfile] = useState<ProfileData>({
-    name: 'ישראל ישראלי',
-    email: 'israel@example.com'
-  });
+  const [isLoading, setIsLoading] = useState(false);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
 
-  const handleAvatarClick = () => {
-    fileInputRef.current?.click();
+  useEffect(() => {
+    if (user) {
+      fetchProfile();
+    }
+  }, [user]);
+
+  const fetchProfile = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user?.id)
+        .single();
+
+      if (error) throw error;
+      setProfile(data);
+    } catch (error) {
+      console.error('שגיאה בטעינת פרופיל:', error);
+    }
   };
 
-  const processFile = (file: File) => {
-    // בדיקת סוג הקובץ
+  const uploadAvatar = async (file: File): Promise<string | null> => {
+    try {
+      if (!user) return null;
+
+      // מחיקת תמונה קיימת אם יש
+      if (profile?.avatar_url) {
+        const oldFileName = profile.avatar_url.split('/').pop();
+        if (oldFileName) {
+          const { error: deleteError } = await supabase.storage
+            .from('avatars')
+            .remove([`${user.id}/${oldFileName}`]);
+          
+          if (deleteError) {
+            console.error('שגיאה במחיקת תמונה קיימת:', deleteError);
+          }
+        }
+      }
+
+      // העלאת התמונה החדשה
+      const fileExt = file.name.split('.').pop();
+      const fileName = `avatar-${Date.now()}.${fileExt}`;
+      const filePath = `${user.id}/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file, { 
+          upsert: true,
+          contentType: file.type 
+        });
+
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+
+      return data.publicUrl;
+    } catch (error) {
+      console.error('שגיאה בהעלאת תמונה:', error);
+      return null;
+    }
+  };
+
+  const processFile = async (file: File) => {
     if (!file.type.startsWith('image/')) {
-      alert('נא להעלות קובץ תמונה בלבד');
+      alert('נא להעלות ק��בץ תמונה בלבד');
       return;
     }
 
-    // בדיקת גודל הקובץ (מקסימום 5MB)
     if (file.size > 5 * 1024 * 1024) {
       alert('גודל הקובץ חייב להיות קטן מ-5MB');
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      // בדיקת מימדי התמונה
-      const img = new Image();
-      img.onload = () => {
-        // אם התמונה קטנה מדי, נציג אזהרה
-        if (img.width < 400 || img.height < 400) {
-          if (!confirm('התמונה קטנה מהמומלץ (400x400). להמשיך בכל זאת?')) {
-            return;
-          }
+    setIsLoading(true);
+    try {
+      const avatarUrl = await uploadAvatar(file);
+      if (avatarUrl) {
+        const { error } = await supabase
+          .from('profiles')
+          .update({ 
+            avatar_url: avatarUrl,
+            name: profile?.name || null,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', user?.id);
+
+        if (error) throw error;
+        
+        if (profile) {
+          setProfile({
+            ...profile,
+            avatar_url: avatarUrl
+          });
         }
-        setProfile(prev => ({
-          ...prev,
-          avatar: e.target?.result as string
-        }));
-      };
-      img.src = e.target?.result as string;
-    };
-    reader.readAsDataURL(file);
+      }
+    } catch (error) {
+      console.error('שגיאה בעדכון תמונת פרופיל:', error);
+      alert('שגיאה בעדכון תמונת הפרופיל');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click();
   };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -81,31 +148,82 @@ const ProfileSection: React.FC = () => {
     }
   };
 
-  const handleRemoveAvatar = () => {
+  const handleRemoveAvatar = async () => {
     if (confirm('האם אתה בטוח שברצונך להסיר את תמונת הפרופיל?')) {
-      setProfile(prev => ({ ...prev, avatar: undefined }));
+      try {
+        if (profile?.avatar_url) {
+          const fileName = profile.avatar_url.split('/').pop();
+          const { error: deleteError } = await supabase.storage
+            .from('avatars')
+            .remove([`${user?.id}/${fileName}`]);
+
+          if (deleteError) throw deleteError;
+        }
+
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ 
+            avatar_url: null,
+            name: profile?.name || null,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', user?.id);
+
+        if (updateError) throw updateError;
+        
+        if (profile) {
+          setProfile({
+            ...profile,
+            avatar_url: null
+          });
+        }
+      } catch (error) {
+        console.error('שגיאה בהסרת תמונת פרופיל:', error);
+        alert('שגיאה בהסרת תמונת הפרופיל');
+      }
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // בדיקת תקינות האימייל
+    if (!profile || !user) return;
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(profile.email)) {
+    if (!emailRegex.test(user.email || '')) {
       alert('נא להזין כתובת אימייל תקינה');
       return;
     }
 
-    // בדיקת אורך השם
-    if (profile.name.length < 2) {
+    if (profile.name && profile.name.length < 2) {
       alert('שם חייב להכיל לפחות 2 תווים');
       return;
     }
 
-    setIsEditing(false);
-    // כאן יתווסף בהמשך הלוגיקה לשמירת הנתונים
+    setIsLoading(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ 
+          name: profile.name,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.id);
+
+      if (error) throw error;
+      setIsEditing(false);
+      await fetchProfile();
+    } catch (error) {
+      console.error('שגיאה בעדכון פרופיל:', error);
+      alert('שגיאה בעדכון הפרופיל');
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+  if (!user || !profile) {
+    return <div className="p-6">טוען...</div>;
+  }
 
   return (
     <section className="bg-white rounded-xl shadow-sm">
@@ -123,16 +241,18 @@ const ProfileSection: React.FC = () => {
                 <div 
                   className={`w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center cursor-pointer transition-all
                     ${isDragging ? 'ring-2 ring-blue-500 ring-offset-2' : 'hover:opacity-90'}
-                    ${profile.avatar ? '' : 'border-2 border-dashed border-gray-300'}`}
+                    ${profile.avatar_url ? '' : 'border-2 border-dashed border-gray-300'}`}
                   onClick={handleAvatarClick}
                   onDragOver={handleDragOver}
                   onDragLeave={handleDragLeave}
                   onDrop={handleDrop}
                 >
-                  {profile.avatar ? (
+                  {isLoading ? (
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900" />
+                  ) : profile.avatar_url ? (
                     <>
                       <img
-                        src={profile.avatar}
+                        src={profile.avatar_url}
                         alt="תמונת פרופיל"
                         className="w-full h-full rounded-full object-cover"
                       />
@@ -178,24 +298,23 @@ const ProfileSection: React.FC = () => {
               </label>
               <input
                 type="text"
-                value={profile.name}
+                value={profile.name || ''}
                 onChange={(e) => setProfile({ ...profile, name: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
               />
             </div>
 
-            {/* אימייל */}
+            {/* אימייל - לקריאה בלבד */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 כתובת אימייל
               </label>
               <input
                 type="email"
-                value={profile.email}
-                onChange={(e) => setProfile({ ...profile, email: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
+                value={user.email || ''}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50"
+                disabled
               />
             </div>
 
@@ -203,14 +322,16 @@ const ProfileSection: React.FC = () => {
             <div className="flex gap-2 pt-2">
               <button
                 type="submit"
-                className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                disabled={isLoading}
+                className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
               >
-                שמירת שינויים
+                {isLoading ? 'שומר...' : 'שמירת שינויים'}
               </button>
               <button
                 type="button"
                 onClick={() => setIsEditing(false)}
-                className="flex-1 px-4 py-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200"
+                disabled={isLoading}
+                className="flex-1 px-4 py-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 disabled:opacity-50"
               >
                 ביטול
               </button>
@@ -218,26 +339,25 @@ const ProfileSection: React.FC = () => {
           </form>
         ) : (
           <div className="space-y-4">
-            {/* תצוגת פרטים */}
             <div className="flex items-center gap-4">
               <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center">
-                {profile.avatar ? (
+                {profile.avatar_url ? (
                   <img
-                    src={profile.avatar}
+                    src={profile.avatar_url}
                     alt="תמונת פרופיל"
                     className="w-full h-full rounded-full object-cover"
                   />
                 ) : (
                   <span className="text-3xl font-semibold text-blue-600">
-                    {profile.name.charAt(0)}
+                    {profile.name?.charAt(0) || user.email?.charAt(0)}
                   </span>
                 )}
               </div>
               <div>
-                <h3 className="text-xl font-semibold">{profile.name}</h3>
+                <h3 className="text-xl font-semibold">{profile.name || 'לא הוגדר שם'}</h3>
                 <p className="text-gray-500 flex items-center gap-1">
                   <Mail className="w-4 h-4" />
-                  {profile.email}
+                  {user.email}
                 </p>
               </div>
             </div>
