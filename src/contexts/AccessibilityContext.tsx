@@ -25,18 +25,20 @@ const AccessibilityContext = createContext<AccessibilityContextType>({
 export const AccessibilityProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [settings, setSettings] = useState<AccessibilitySettings>(() => {
     const savedSettings = localStorage.getItem('accessibilitySettings');
-    return savedSettings ? JSON.parse(savedSettings) : defaultSettings;
+    const initialSettings = savedSettings ? JSON.parse(savedSettings) : defaultSettings;
+    console.log('Initial settings:', initialSettings);
+    return initialSettings;
   });
 
   useEffect(() => {
+    console.log('Settings updated:', settings);
     localStorage.setItem('accessibilitySettings', JSON.stringify(settings));
     
-    // עדכון classes על תגית ה-html
+    // עדכון data attributes על תגית ה-html
     const htmlElement = document.documentElement;
     
     // גודל טקסט
-    htmlElement.classList.remove('text-small', 'text-medium', 'text-large');
-    htmlElement.classList.add(`text-${settings.fontSize}`);
+    htmlElement.setAttribute('data-textsize', settings.fontSize);
     
     // ניגודיות גבוהה
     htmlElement.classList.toggle('high-contrast', settings.highContrast);
@@ -47,7 +49,12 @@ export const AccessibilityProvider: React.FC<{ children: React.ReactNode }> = ({
   }, [settings]);
 
   const updateSettings = (newSettings: Partial<AccessibilitySettings>) => {
-    setSettings(prev => ({ ...prev, ...newSettings }));
+    console.log('Updating settings with:', newSettings);
+    setSettings(prev => {
+      const updated = { ...prev, ...newSettings };
+      console.log('New settings will be:', updated);
+      return updated;
+    });
   };
 
   return (

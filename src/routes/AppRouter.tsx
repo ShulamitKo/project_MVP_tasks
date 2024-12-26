@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { AuthProvider } from '../contexts/AuthContext';
 import { ThemeProvider } from '../contexts/ThemeContext';
 import { DataProvider } from '../contexts/DataContext';
+import { AccessibilityProvider } from '../contexts/AccessibilityContext';
 import { AuthGuard } from '../components/auth/AuthGuard';
 import { LoginForm } from '../components/auth/LoginForm';
 import SignUpForm from '../components/auth/SignUpForm';
@@ -78,31 +79,33 @@ export const AppRouter = () => {
       <ThemeProvider>
         <AuthProvider>
           <DataProvider>
-            <Routes>
-              {/* ראוטים ציבוריים */}
-              <Route path="/login" element={<LoginForm />} />
-              <Route path="/signup" element={<SignUpForm />} />
-              <Route path="/forgot-password" element={<ForgotPasswordForm />} />
-              <Route path="/reset-password" element={<ResetPasswordWrapper />} />
-              <Route path="/auth/callback" element={<EmailVerificationHandler />} />
-              <Route 
-                path="/auth/reset-password" 
-                element={<Navigate to={`/reset-password${window.location.search}${window.location.hash}`} replace />} 
-              />
-              
-              {/* ראוטים מאובטחים */}
-              <Route
-                path="/"
-                element={
-                  <AuthGuard>
-                    <App />
-                  </AuthGuard>
-                }
-              />
+            <AccessibilityProvider>
+              <Routes>
+                {/* ראוטים ציבוריים */}
+                <Route path="/login" element={<LoginForm />} />
+                <Route path="/signup" element={<SignUpForm />} />
+                <Route path="/forgot-password" element={<ForgotPasswordForm />} />
+                <Route path="/reset-password" element={<ResetPasswordWrapper />} />
+                <Route path="/auth/callback" element={<EmailVerificationHandler />} />
+                <Route 
+                  path="/auth/reset-password" 
+                  element={<Navigate to={`/reset-password${window.location.search}${window.location.hash}`} replace />} 
+                />
+                
+                {/* ראוטים מאובטחים */}
+                <Route
+                  path="/"
+                  element={
+                    <AuthGuard>
+                      <App />
+                    </AuthGuard>
+                  }
+                />
 
-              {/* הפניה לדף הבית במקרה של נתיב לא ים */}
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
+                {/* הפניה לדף הבית במקרה של נתיב לא ים */}
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </AccessibilityProvider>
           </DataProvider>
         </AuthProvider>
       </ThemeProvider>

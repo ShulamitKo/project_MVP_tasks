@@ -1,6 +1,5 @@
 import React from 'react';
-import { Type, ZoomIn, Timer } from 'lucide-react';
-import ToggleSwitch from '../common/ToggleSwitch';
+import { Type, ZoomIn } from 'lucide-react';
 import { useAccessibility } from '../../contexts/AccessibilityContext';
 
 const AccessibilitySection: React.FC = () => {
@@ -11,6 +10,12 @@ const AccessibilitySection: React.FC = () => {
     { value: 'medium', label: 'בינוני' },
     { value: 'large', label: 'גדול' }
   ] as const;
+
+  const handleFontSizeChange = (size: 'small' | 'medium' | 'large') => {
+    console.log('Button clicked with size:', size);
+    console.log('Current settings:', settings);
+    updateSettings({ fontSize: size });
+  };
 
   return (
     <section className="bg-white rounded-xl shadow-sm">
@@ -31,10 +36,10 @@ const AccessibilitySection: React.FC = () => {
               {fontSizeOptions.map(option => (
                 <button
                   key={option.value}
-                  onClick={() => updateSettings({ fontSize: option.value })}
-                  className={`px-4 py-2 rounded-lg text-sm transition-colors ${
+                  onClick={() => handleFontSizeChange(option.value)}
+                  className={`px-6 py-2.5 rounded-lg font-medium transition-all ${
                     settings.fontSize === option.value
-                      ? 'bg-blue-500 text-white'
+                      ? 'bg-blue-500 text-white shadow-md scale-105'
                       : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   }`}
                 >
@@ -43,41 +48,9 @@ const AccessibilitySection: React.FC = () => {
               ))}
             </div>
             {/* תצוגה מקדימה */}
-            <div className={`mt-3 p-4 bg-gray-50 rounded-lg ${
-              settings.fontSize === 'small' ? 'text-sm' :
-              settings.fontSize === 'large' ? 'text-lg' : 'text-base'
-            }`}>
+            <div className="mt-3 p-4 bg-gray-50 rounded-lg">
               <p>דוגמה לגודל הטקסט הנבחר</p>
             </div>
-          </div>
-
-          {/* ניגודיות גבוהה */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div>
-                <p className="font-medium">ניגודיות גבוהה</p>
-                <p className="text-sm text-gray-500">הגברת הניגודיות בין צבעים</p>
-              </div>
-            </div>
-            <ToggleSwitch
-              checked={settings.highContrast}
-              onChange={(checked: boolean) => updateSettings({ highContrast: checked })}
-            />
-          </div>
-
-          {/* הפחתת אנימציות */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Timer className="w-5 h-5 text-gray-500" />
-              <div>
-                <p className="font-medium">הפחתת אנימציות</p>
-                <p className="text-sm text-gray-500">הפחתת אנימציות ומעברים</p>
-              </div>
-            </div>
-            <ToggleSwitch
-              checked={settings.animationReduced}
-              onChange={(checked: boolean) => updateSettings({ animationReduced: checked })}
-            />
           </div>
         </div>
       </div>
