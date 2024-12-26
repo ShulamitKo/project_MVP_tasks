@@ -11,6 +11,7 @@ const ProfileSection: React.FC = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [originalProfile, setOriginalProfile] = useState<UserProfile | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -28,6 +29,7 @@ const ProfileSection: React.FC = () => {
 
       if (error) throw error;
       setProfile(data);
+      setOriginalProfile(data);
     } catch (error) {
       console.error('שגיאה בטעינת פרופיל:', error);
     }
@@ -78,7 +80,7 @@ const ProfileSection: React.FC = () => {
 
   const processFile = async (file: File) => {
     if (!file.type.startsWith('image/')) {
-      alert('נא להעלות ק��בץ תמונה בלבד');
+      alert('נא להעלות קובץ תמונה בלבד');
       return;
     }
 
@@ -90,28 +92,16 @@ const ProfileSection: React.FC = () => {
     setIsLoading(true);
     try {
       const avatarUrl = await uploadAvatar(file);
-      if (avatarUrl) {
-        const { error } = await supabase
-          .from('profiles')
-          .update({ 
-            avatar_url: avatarUrl,
-            name: profile?.name || null,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', user?.id);
-
-        if (error) throw error;
-        
-        if (profile) {
-          setProfile({
-            ...profile,
-            avatar_url: avatarUrl
-          });
-        }
+      if (avatarUrl && profile) {
+        // רק שומר בזיכרון המקומי
+        setProfile({
+          ...profile,
+          avatar_url: avatarUrl
+        });
       }
     } catch (error) {
-      console.error('שגיאה בעדכון תמונת פרופיל:', error);
-      alert('שגיאה בעדכון תמונת הפרופיל');
+      console.error('שגיאה בהעלאת תמונה:', error);
+      alert('שגיאה בהעלאת תמונת הפרופיל');
     } finally {
       setIsLoading(false);
     }
@@ -149,38 +139,11 @@ const ProfileSection: React.FC = () => {
   };
 
   const handleRemoveAvatar = async () => {
-    if (confirm('האם אתה בטוח שברצונך להסיר את תמונת הפרופיל?')) {
-      try {
-        if (profile?.avatar_url) {
-          const fileName = profile.avatar_url.split('/').pop();
-          const { error: deleteError } = await supabase.storage
-            .from('avatars')
-            .remove([`${user?.id}/${fileName}`]);
-
-          if (deleteError) throw deleteError;
-        }
-
-        const { error: updateError } = await supabase
-          .from('profiles')
-          .update({ 
-            avatar_url: null,
-            name: profile?.name || null,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', user?.id);
-
-        if (updateError) throw updateError;
-        
-        if (profile) {
-          setProfile({
-            ...profile,
-            avatar_url: null
-          });
-        }
-      } catch (error) {
-        console.error('שגיאה בהסרת תמונת פרופיל:', error);
-        alert('שגיאה בהסרת תמונת הפרופיל');
-      }
+    if (confirm('האם אתה בטוח שברצונך להסיר את תמונת הפרופיל?') && profile) {
+      setProfile({
+        ...profile,
+        avatar_url: null
+      });
     }
   };
 
@@ -202,10 +165,26 @@ const ProfileSection: React.FC = () => {
 
     setIsLoading(true);
     try {
+      // מחיקת תמונה ישנה אם השתנתה
+      if (profile.avatar_url !== originalProfile?.avatar_url && originalProfile?.avatar_url) {
+        const oldFileName = originalProfile.avatar_url.split('/').pop();
+        if (oldFileName) {
+          const { error: deleteError } = await supabase.storage
+            .from('avatars')
+            .remove([`${user.id}/${oldFileName}`]);
+          
+          if (deleteError) {
+            console.error('שגיאה במחיקת תמונה קיימת:', deleteError);
+          }
+        }
+      }
+
+      // שמירת כל השינויים בבת אחת
       const { error } = await supabase
         .from('profiles')
         .update({ 
           name: profile.name,
+          avatar_url: profile.avatar_url,
           updated_at: new Date().toISOString()
         })
         .eq('id', user.id);
@@ -329,7 +308,10 @@ const ProfileSection: React.FC = () => {
               </button>
               <button
                 type="button"
-                onClick={() => setIsEditing(false)}
+                onClick={() => {
+                  setProfile(originalProfile);
+                  setIsEditing(false);
+                }}
                 disabled={isLoading}
                 className="flex-1 px-4 py-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 disabled:opacity-50"
               >
@@ -367,8 +349,7 @@ const ProfileSection: React.FC = () => {
               className="w-full px-4 py-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 flex items-center justify-center gap-2"
             >
               <Edit2 className="w-4 h-4" />
-              עריכת פרטים
-            </button>
+עריכת פרטים            </button>
           </div>
         )}
       </div>
