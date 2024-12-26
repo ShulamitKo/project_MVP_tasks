@@ -47,7 +47,7 @@ export const SignUpForm = () => {
         return;
       }
 
-      // הרשמה הצליחה
+      // הרשמה הצליחה - סופבייס שולח אוטומטית מייל אימות
       setIsSuccess(true);
     } catch (err) {
       console.error('Unexpected error during signup:', err);
@@ -142,7 +142,7 @@ export const SignUpForm = () => {
                 isLoading ? 'opacity-50 cursor-not-allowed' : ''
               }`}
             >
-              {isLoading ? '��בצע הרשמה...' : 'הרשמה'}
+              {isLoading ? 'בצע הרשמה...' : 'הרשמה'}
             </button>
           </div>
         </form>

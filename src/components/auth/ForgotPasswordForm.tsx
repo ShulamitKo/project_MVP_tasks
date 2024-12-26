@@ -24,22 +24,18 @@ export const ForgotPasswordForm = () => {
     setError(null);
 
     try {
-      const { error: resetError } = await resetPassword(email);
-      
-      if (resetError) {
-        switch (resetError.message) {
-          case 'User not found':
-            setError('לא נמצא משתמש עם כתובת האימייל הזו');
-            break;
-          default:
-            setError('שגיאה בשליחת הבקשה. אנא נסו שוב מאוחר יותר');
-        }
-        return;
-      }
-
+      await resetPassword(email);
       setIsSuccess(true);
-    } catch (err) {
-      setError('שגיאה לא צפויה. אנא נסו שוב');
+    } catch (err: any) {
+      console.error('Password reset error:', err);
+      
+      if (err.message.includes('אין חיבור לאינטרנט')) {
+        setError(err.message);
+      } else if (err.message.includes('לא נמצאה במערכת')) {
+        setError(err.message);
+      } else {
+        setError('שגיאה בשליחת המייל. אנא נסה שוב מאוחר יותר');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -52,9 +48,19 @@ export const ForgotPasswordForm = () => {
           <div className="text-center">
             <h2 className="text-3xl font-bold text-gray-900 mb-2">בדקו את האימייל שלכם</h2>
             <p className="text-gray-600">
-              שלחנו לכם קישור לאיפוס הסיסמה.
+              שלחנו לך קישור לאיפוס הסיסמה,
               <br />
-              אנא בדקו את תיבת הדואר שלכם (כולל ספאם) ולחצו על הקישור.
+              אנא בדוק את תיבת הדואר שלך (כולל ספאם) ולחץ על הקישור.
+              <br />
+              <span>
+                במידה ואינך רשום במערכת - {' '}
+                <button
+                  onClick={() => navigate('/signup')}
+                  className="font-medium text-blue-600 hover:text-blue-500"
+                >
+                  הירשם כאן
+                </button>
+              </span>
             </p>
           </div>
           <button

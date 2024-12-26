@@ -19,18 +19,28 @@ export const authApi = {
 
   // נוסיף את הפונקציות החדשות
   async sendResetPasswordEmail(email: string): Promise<void> {
-    console.log('Sending reset password email with redirect to:', `${window.location.origin}/reset-password`);
+    console.log('Starting password reset for email:', email);
     
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`
-    });
+    try {
+      const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth/reset-password`
+      });
 
-    if (error) {
-      console.error('Error sending reset password email:', error);
-      if (error.message.includes('Email not found')) {
-        throw new Error('כתובת האימייל לא נמצאה במערכת');
+      console.log('Reset password response:', { data, error });
+
+      if (error) {
+        console.error('Error sending reset password email:', error);
+        if (error.message.includes('Email not found')) {
+          throw new Error('כתובת האימייל לא נמצאה במערכת');
+        }
+        throw new Error('שגיאה בשליחת המייל לאיפוס סיסמה');
       }
-      throw new Error('שגיאה בשליחת המייל לאיפוס סיסמה');
+    } catch (error: any) {
+      console.error('Error sending reset password email:', error);
+      if (error.message === 'Failed to fetch') {
+        throw new Error('אין חיבור לאינטרנט, אנא בדוק את החיבור שלך ונסה שוב');
+      }
+      throw error;
     }
   },
 
