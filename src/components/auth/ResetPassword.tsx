@@ -18,7 +18,7 @@ const ResetPassword: React.FC = () => {
         const token = searchParams.get('token');
         const type = searchParams.get('type');
         
-        if (!token || type !== 'recovery') {
+        if (!token || (type !== 'recovery' && type !== 'passwordReset')) {
           setError('קישור לא תקין');
           return;
         }
