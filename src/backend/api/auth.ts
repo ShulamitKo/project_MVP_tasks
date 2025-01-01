@@ -22,9 +22,6 @@ export const authApi = {
     console.log('Starting password reset for email:', email);
     
     try {
-      // שמירת האימייל לשימוש מאוחר יותר
-      sessionStorage.setItem('reset_email', email);
-
       const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: 'https://project-mvp-tasks.vercel.app/auth/reset-password'
       });

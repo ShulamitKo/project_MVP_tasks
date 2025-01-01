@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { authApi } from '../../backend/api/auth';
 import { supabase } from '../../backend/supabase/config';
-import { AuthError } from '@supabase/supabase-js';
 
 const ResetPassword: React.FC = () => {
   const [password, setPassword] = useState('');
@@ -21,27 +20,16 @@ const ResetPassword: React.FC = () => {
     if (token && type === 'recovery') {
       // שמירת הטוקן בסשן
       sessionStorage.setItem('reset_password_token', token);
-      
-      // עדכון הסשן עם הטוקן החדש
-      supabase.auth.verifyOtp({
-        type: 'recovery',
-        token: token,
-        email: sessionStorage.getItem('reset_email') || ''
-      }).then(({ data, error }: { data: any, error: AuthError | null }) => {
-        if (error) {
-          console.error('Error verifying token:', error);
-          setError('הקישור לא תקין או פג תוקף');
-        }
-      });
     }
 
     // בדיקה גם ב-hash למקרה שהטוקן נמצא שם
     const hash = location.hash;
-    const hashParams = new URLSearchParams(hash.replace('#', ''));
-    const accessToken = hashParams.get('access_token');
-    
-    if (accessToken) {
-      sessionStorage.setItem('access_token', accessToken);
+    if (hash) {
+      const hashParams = new URLSearchParams(hash.replace('#', ''));
+      const accessToken = hashParams.get('access_token');
+      if (accessToken) {
+        sessionStorage.setItem('access_token', accessToken);
+      }
     }
   }, [location]);
 
@@ -62,12 +50,25 @@ const ResetPassword: React.FC = () => {
     setIsLoading(true);
 
     try {
-      await authApi.updatePassword(password);
+      const token = sessionStorage.getItem('reset_password_token');
+      if (!token) {
+        throw new Error('לא נמצא טוקן לאיפוס סיסמה');
+      }
+
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: password
+      });
+
+      if (updateError) {
+        throw updateError;
+      }
+
       sessionStorage.removeItem('reset_password_token');
       navigate('/login', { 
         state: { message: 'הסיסמה שונתה בהצלחה. אנא התחבר עם הסיסמה החדשה.' }
       });
     } catch (error) {
+      console.error('Error resetting password:', error);
       setError(error instanceof Error ? error.message : 'שגיאה באיפוס הסיסמה');
     } finally {
       setIsLoading(false);
