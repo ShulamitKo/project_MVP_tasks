@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '../backend/supabase/config';
 import { authApi } from '../backend/api/auth';
+import { environment } from '../backend/config/environment';
 
 export interface AuthContextType {
   user: User | null;
@@ -52,7 +53,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         password,
         options: {
           data: {
-            redirect_url: 'https://project-mvp-tasks.vercel.app/auth/callback'
+            redirect_url: `${environment.api.baseUrl}/auth/callback`
           }
         }
       });

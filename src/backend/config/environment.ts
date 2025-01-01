@@ -27,18 +27,21 @@ function createEnvironment(): Environment {
     import.meta.env.VITE_SUPABASE_ANON_KEY
   );
 
-  // יצירת אובייקט הקונפיגורציה
-  const environment: Environment = {
+  const apiUrl = validateEnvironmentVariable(
+    'VITE_API_URL',
+    import.meta.env.VITE_API_URL
+  );
+  
+  return {
+    isProduction,
     supabase: {
       url: supabaseUrl,
-      anonKey: supabaseAnonKey
+      anonKey: supabaseAnonKey,
     },
-    isProduction
+    api: {
+      baseUrl: apiUrl
+    }
   };
-
-  // הקפאת האובייקט למניעת שינויים
-  return Object.freeze(environment);
 }
 
-// יצירת הקונפיגורציה פעם אחת בלבד
 export const environment = createEnvironment(); 
