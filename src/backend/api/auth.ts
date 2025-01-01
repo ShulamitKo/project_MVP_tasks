@@ -1,4 +1,5 @@
 import { supabase } from '../supabase/config';
+import { environment } from '../config/environment';
 
 export const authApi = {
   // הפונקציות הקיימות נשארות
@@ -22,8 +23,11 @@ export const authApi = {
     console.log('Starting password reset for email:', email);
     
     try {
+      // בודק אם אנחנו בסביבת פיתוח
+      const baseUrl = window.location.origin;
+      
       const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: 'https://project-mvp-tasks.vercel.app/auth/reset-password'
+        redirectTo: `${baseUrl}/auth/reset-password`
       });
 
       console.log('Reset password response:', { data, error });
