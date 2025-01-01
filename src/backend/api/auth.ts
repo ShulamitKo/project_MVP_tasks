@@ -23,7 +23,7 @@ export const authApi = {
     
     try {
       const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/reset-password`
+        redirectTo: 'https://project-mvp-tasks.vercel.app/auth/reset-password'
       });
 
       console.log('Reset password response:', { data, error });
