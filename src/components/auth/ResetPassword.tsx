@@ -11,7 +11,16 @@ const ResetPassword: React.FC = () => {
   const location = useLocation();
 
   useEffect(() => {
-    // שמירת הטוקן בסשן
+    // שבלת הטוקן מה-URL
+    const searchParams = new URLSearchParams(location.search);
+    const token = searchParams.get('token');
+    const type = searchParams.get('type');
+    
+    if (token && type === 'recovery') {
+      sessionStorage.setItem('reset_password_token', token);
+    }
+
+    // בדיקה גם ב-hash למקרה שהטוקן נמצא שם
     const hash = location.hash;
     const hashParams = new URLSearchParams(hash.replace('#', ''));
     const accessToken = hashParams.get('access_token');
@@ -31,7 +40,7 @@ const ResetPassword: React.FC = () => {
     }
 
     if (password.length < 6) {
-      setError('הסיסמה חייבת להכיל לפחות 6 תווי��');
+      setError('הסיסמה חייבת להכיל לפחות 6 תווים');
       return;
     }
 
