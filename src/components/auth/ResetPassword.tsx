@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { authApi } from '../../backend/api/auth';
 import { supabase } from '../../backend/supabase/config';
 
 const ResetPassword: React.FC = () => {
@@ -12,25 +11,40 @@ const ResetPassword: React.FC = () => {
   const location = useLocation();
 
   useEffect(() => {
-    // שבלת הטוקן מה-URL
-    const searchParams = new URLSearchParams(location.search);
-    const token = searchParams.get('token');
-    const type = searchParams.get('type');
-    
-    if (token && type === 'recovery') {
-      // שמירת הטוקן בסשן
-      sessionStorage.setItem('reset_password_token', token);
-    }
+    const verifyToken = async () => {
+      try {
+        // קבלת הטוקן מה-URL
+        const searchParams = new URLSearchParams(location.search);
+        const token = searchParams.get('token');
+        const type = searchParams.get('type');
+        
+        if (!token || type !== 'recovery') {
+          setError('קישור לא תקין');
+          return;
+        }
 
-    // בדיקה גם ב-hash למקרה שהטוקן נמצא שם
-    const hash = location.hash;
-    if (hash) {
-      const hashParams = new URLSearchParams(hash.replace('#', ''));
-      const accessToken = hashParams.get('access_token');
-      if (accessToken) {
-        sessionStorage.setItem('access_token', accessToken);
+        // שמירת הטוקן לשימוש בעדכון הסיסמה
+        sessionStorage.setItem('reset_password_token', token);
+
+        // אימות הסשן הנוכחי
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) {
+          console.error('Error getting session:', sessionError);
+          setError('שגיאה באימות הקישור');
+          return;
+        }
+
+        if (!session) {
+          setError('הקישור לא תקין או פג תוקף');
+          return;
+        }
+      } catch (error) {
+        console.error('Error in token verification:', error);
+        setError('שגיאה באימות הקישור');
       }
-    }
+    };
+
+    verifyToken();
   }, [location]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -52,7 +66,7 @@ const ResetPassword: React.FC = () => {
     try {
       const token = sessionStorage.getItem('reset_password_token');
       if (!token) {
-        throw new Error('לא נמצא טוקן לאיפוס סיסמה');
+        throw new Error('לא נמצא טוקן תקין לאיפוס סיסמה');
       }
 
       const { error: updateError } = await supabase.auth.updateUser({
