@@ -18,19 +18,35 @@ const ResetPassword: React.FC = () => {
         const token = searchParams.get('token');
         const type = searchParams.get('type');
         
+        console.log('Token verification:', { token, type });
+
         // אם אין טוקן, ננסה לקבל את הסשן הנוכחי
         if (!token) {
           const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-          if (sessionError || !session) {
+          console.log('Session check:', { session, error: sessionError });
+          
+          if (sessionError) {
+            console.error('Session error:', sessionError);
+            setError('שגיאה באימות המשתמש');
+            return;
+          }
+          
+          if (!session) {
             setError('הקישור לא תקין או פג תוקף');
             return;
           }
-          // אם יש סשן תקין, נמשיך לטופס
+          
           return;
         }
 
-        // אם יש טוקן, נוודא שהסוג תקין
-        if (type !== 'recovery' && type !== 'passwordReset') {
+        // אם יש טוקן, ננסה לאמת אותו
+        const { error: verifyError } = await supabase.auth.verifyOtp({
+          token_hash: token,
+          type: 'recovery'
+        });
+
+        if (verifyError) {
+          console.error('Verify error:', verifyError);
           setError('הקישור לא תקין או פג תוקף');
           return;
         }
