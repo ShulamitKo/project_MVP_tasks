@@ -14,14 +14,14 @@ const ResetPassword: React.FC = () => {
     const verifyToken = async () => {
       try {
         // קבלת הטוקן מה-URL
-        const searchParams = new URLSearchParams(location.search);
-        const token = searchParams.get('token');
+        const searchParams = new URLSearchParams(location.hash.substring(1));
+        const accessToken = searchParams.get('access_token');
         const type = searchParams.get('type');
         
-        console.log('Token verification:', { token, type });
+        console.log('Token verification:', { accessToken, type });
 
-        // אם אין טוקן, ננסה לקבל את הסשן הנוכחי
-        if (!token) {
+        // אם אין טוקן גישה, ננסה לקבל את הסשן הנוכחי
+        if (!accessToken) {
           const { data: { session }, error: sessionError } = await supabase.auth.getSession();
           console.log('Session check:', { session, error: sessionError });
           
@@ -39,20 +39,25 @@ const ResetPassword: React.FC = () => {
           return;
         }
 
-        // אם יש טוקן, ננסה לאמת אותו
-        const { error: verifyError } = await supabase.auth.verifyOtp({
-          token_hash: token,
-          type: 'recovery'
+        // אם יש טוקן, ננסה להשתמש בו
+        const { data: { session }, error: setSessionError } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: searchParams.get('refresh_token') || ''
         });
 
-        if (verifyError) {
-          console.error('Verify error:', verifyError);
+        if (setSessionError) {
+          console.error('Set session error:', setSessionError);
           setError('הקישור לא תקין או פג תוקף');
           return;
         }
 
+        if (!session) {
+          setError('שגיאה באימות המשתמש');
+          return;
+        }
+
         // שמירת הטוקן לשימוש בעדכון הסיסמה
-        sessionStorage.setItem('reset_password_token', token);
+        sessionStorage.setItem('reset_password_token', accessToken);
       } catch (error) {
         console.error('Error in token verification:', error);
         setError('שגיאה באימות הקישור');
