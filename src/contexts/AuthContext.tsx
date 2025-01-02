@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '../backend/supabase/config';
 import { authApi } from '../backend/api/auth';
+import { environment } from '../backend/config/environment';
 
 export interface AuthContextType {
   user: User | null;
@@ -47,9 +48,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signUp = async (email: string, password: string) => {
     try {
-      const redirectUrl = import.meta.env.PROD 
-        ? 'https://project-mvp-tasks-git-main-yamyafe-gmailcoms-projects.vercel.app/auth/callback'
-        : `${window.location.origin}/auth/callback`;
+      // בדיקת הסביבה והגדרת ה-URL המתאים
+      const redirectUrl = environment.isProduction 
+        ? `${environment.api.baseUrl}/auth/callback`  // URL של Preview בייצור
+        : `${window.location.origin}/auth/callback`;  // URL מקומי בפיתוח
 
       const { error } = await supabase.auth.signUp({
         email,
