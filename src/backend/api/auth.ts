@@ -23,11 +23,13 @@ export const authApi = {
     console.log('Starting password reset for email:', email);
     
     try {
-      // בודק אם אנחנו בסביבת פיתוח
-      const baseUrl = window.location.origin;
-      
+      // בסביבת ייצור נשתמש בדומיין הספציפי
+      const redirectUrl = import.meta.env.PROD 
+        ? 'https://project-mvp-tasks-git-main-yamyafe-gmailcoms-projects.vercel.app/auth/reset-password'
+        : `${window.location.origin}/auth/reset-password`;
+
       const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${baseUrl}/auth/reset-password`
+        redirectTo: redirectUrl
       });
 
       console.log('Reset password response:', { data, error });
