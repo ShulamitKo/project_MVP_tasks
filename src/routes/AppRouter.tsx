@@ -86,11 +86,10 @@ export const AppRouter = () => {
                 <Route path="/signup" element={<SignUpForm />} />
                 <Route path="/forgot-password" element={<ForgotPasswordForm />} />
                 <Route path="/reset-password" element={<ResetPasswordWrapper />} />
+                
+                {/* נתיבי אימות */}
                 <Route path="/auth/callback" element={<EmailVerificationHandler />} />
-                <Route 
-                  path="/auth/reset-password" 
-                  element={<Navigate to={`/reset-password${window.location.search}${window.location.hash}`} replace />} 
-                />
+                <Route path="/auth/reset-password" element={<Navigate to={`/reset-password${window.location.search}${window.location.hash}`} replace />} />
                 
                 {/* ראוטים מאובטחים */}
                 <Route

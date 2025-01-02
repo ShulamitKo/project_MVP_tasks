@@ -13,51 +13,33 @@ const ResetPassword: React.FC = () => {
   useEffect(() => {
     const verifyToken = async () => {
       try {
-        // קבלת הטוקן מה-URL
-        const searchParams = new URLSearchParams(location.hash.substring(1));
-        const accessToken = searchParams.get('access_token');
-        const type = searchParams.get('type');
-        
-        console.log('Token verification:', { accessToken, type });
-
-        // אם אין טוקן גישה, ננסה לקבל את הסשן הנוכחי
-        if (!accessToken) {
-          const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-          console.log('Session check:', { session, error: sessionError });
-          
-          if (sessionError) {
-            console.error('Session error:', sessionError);
-            setError('שגיאה באימות המשתמש');
-            return;
-          }
-          
-          if (!session) {
-            setError('הקישור לא תקין או פג תוקף');
-            return;
-          }
-          
+        // אימות הסשן הנוכחי
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) {
+          console.error('Error getting session:', sessionError);
+          setError('שגיאה באימות הקישור');
           return;
         }
 
-        // אם יש טוקן, ננסה להשתמש בו
-        const { data: { session }, error: setSessionError } = await supabase.auth.setSession({
-          access_token: accessToken,
-          refresh_token: searchParams.get('refresh_token') || ''
-        });
+        // אם יש סשן תקין, לא נציג שגיאה
+        if (session) {
+          setError(null);
+          return;
+        }
 
-        if (setSessionError) {
-          console.error('Set session error:', setSessionError);
+        // קבלת הטוקן מה-URL
+        const searchParams = new URLSearchParams(location.search);
+        const token = searchParams.get('token');
+        const type = searchParams.get('type');
+        
+        // רק אם אין סשן, נבדוק את הטוקן והסוג
+        if (!token || (type !== 'recovery' && type !== 'passwordReset')) {
           setError('הקישור לא תקין או פג תוקף');
           return;
         }
 
-        if (!session) {
-          setError('שגיאה באימות המשתמש');
-          return;
-        }
-
         // שמירת הטוקן לשימוש בעדכון הסיסמה
-        sessionStorage.setItem('reset_password_token', accessToken);
+        sessionStorage.setItem('reset_password_token', token);
       } catch (error) {
         console.error('Error in token verification:', error);
         setError('שגיאה באימות הקישור');
